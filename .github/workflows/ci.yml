@@ -1,0 +1,54 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    # Typecheck, lint, format, privacy/normalisation guards, and every test-suite. The database
+    # tests run on PostgreSQL in-process (PGlite), so this job needs no services.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm format
+      - run: pnpm check:deps
+      - run: pnpm check:normalize
+      - run: pnpm test
+
+  migrations-on-postgres:
+    # The identical SQL must also apply, revert and re-apply on a real PostgreSQL server.
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: kosh_owner
+          POSTGRES_PASSWORD: kosh
+          POSTGRES_DB: gurbani_kosh
+          POSTGRES_INITDB_ARGS: '--encoding=UTF8 --locale=C'
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U kosh_owner -d gurbani_kosh"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://kosh_owner:kosh@localhost:5432/gurbani_kosh
+      KOSH_MFA_KEY: ci-only-mfa-key-not-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - name: Migrations up, down --all, up (reversibility on real PostgreSQL)
+        run: |
+          pnpm kosh migrate up
+          pnpm kosh migrate down --all
+          pnpm kosh migrate up
+          pnpm kosh migrate status

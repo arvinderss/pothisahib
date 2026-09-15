@@ -1,0 +1,90 @@
+# Canonical self-hosted topology: PostgreSQL, one-shot migrator, public API, admin API.
+# Runs identically on a laptop, a VPS or a Raspberry Pi. See docs/deployment.md.
+#
+# STATUS: written against the documented images and commands but NOT executed on the
+# development machine that produced Milestone 1 (Docker was unavailable there). Treat the first
+# `docker compose up` as a verification step and record the outcome in docs/deployment.md.
+#
+#   cp .env.example .env   # then set POSTGRES_PASSWORD, KOSH_*_PASSWORD, KOSH_MFA_KEY
+#   docker compose -f deployment/docker-compose.yml --env-file .env up -d
+
+name: gurbani-kosh
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: kosh_owner
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: gurbani_kosh
+      POSTGRES_INITDB_ARGS: '--encoding=UTF8 --locale=C'
+      KOSH_PUBLIC_PASSWORD: ${KOSH_PUBLIC_PASSWORD:?set KOSH_PUBLIC_PASSWORD}
+      KOSH_APP_PASSWORD: ${KOSH_APP_PASSWORD:?set KOSH_APP_PASSWORD}
+      KOSH_INGEST_PASSWORD: ${KOSH_INGEST_PASSWORD:?set KOSH_INGEST_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U kosh_owner -d gurbani_kosh']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  migrate:
+    build: { context: .., dockerfile: deployment/Dockerfile }
+    command: ['pnpm', '--filter', '@pothisahib/kosh-cli', 'run', 'kosh', 'migrate', 'up']
+    environment:
+      DATABASE_URL: postgres://kosh_owner:${POSTGRES_PASSWORD}@postgres:5432/gurbani_kosh
+    depends_on:
+      postgres: { condition: service_healthy }
+    restart: 'no'
+
+  api-public:
+    build: { context: .., dockerfile: deployment/Dockerfile }
+    command: ['pnpm', '--filter', '@pothisahib/api', 'run', 'start:public']
+    environment:
+      DATABASE_URL: postgres://kosh_public:${KOSH_PUBLIC_PASSWORD}@postgres:5432/gurbani_kosh
+      PUBLIC_DATABASE_URL: postgres://kosh_public:${KOSH_PUBLIC_PASSWORD}@postgres:5432/gurbani_kosh
+      KOSH_MFA_KEY: ${KOSH_MFA_KEY:?set KOSH_MFA_KEY}
+      PUBLIC_API_PORT: '8080'
+      PUBLIC_API_HOST: 0.0.0.0
+      PUBLIC_CORS_ORIGIN: ${PUBLIC_CORS_ORIGIN:-*}
+    ports:
+      - '${PUBLIC_API_PORT:-8080}:8080'
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:8080/health || exit 1']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  api-admin:
+    build: { context: .., dockerfile: deployment/Dockerfile }
+    command: ['pnpm', '--filter', '@pothisahib/api', 'run', 'start:admin']
+    environment:
+      DATABASE_URL: postgres://kosh_app:${KOSH_APP_PASSWORD}@postgres:5432/gurbani_kosh
+      APP_DATABASE_URL: postgres://kosh_app:${KOSH_APP_PASSWORD}@postgres:5432/gurbani_kosh
+      KOSH_MFA_KEY: ${KOSH_MFA_KEY:?set KOSH_MFA_KEY}
+      KOSH_OBJECT_STORE_DIR: /data/objects
+      ADMIN_API_PORT: '8081'
+      ADMIN_API_HOST: 0.0.0.0
+    volumes:
+      - objects:/data/objects
+    ports:
+      # loopback only on the host: put a reverse proxy with TLS (or a VPN) in front
+      - '127.0.0.1:${ADMIN_API_PORT:-8081}:8081'
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:8081/health || exit 1']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  objects:

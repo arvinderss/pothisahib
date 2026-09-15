@@ -1,0 +1,18 @@
+{
+  "name": "@pothisahib/corpus",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Gurbani Kosh database: versioned SQL migrations and database-invariant tests. Tests run on PostgreSQL via PGlite; the identical SQL runs on production PostgreSQL.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@pothisahib/db": "workspace:*",
+    "@pothisahib/gurmukhi": "workspace:*",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
+  }
+}

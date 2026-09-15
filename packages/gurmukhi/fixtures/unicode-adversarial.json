@@ -1,0 +1,226 @@
+{
+  "_notice": "SYNTHETIC TEST DATA — constructed Gurmukhi strings for Unicode edge-case testing. NOT Gurbani corpus data. Never seed into the corpus.",
+  "diff_cases": [
+    {
+      "id": "matra-aunkar-vs-dulainkar",
+      "a": "ਸਤਿਗੁਰੁ",
+      "b": "ਸਤਿਗੁਰੂ",
+      "expect": [
+        "MATRA"
+      ]
+    },
+    {
+      "id": "matra-sihari-vs-bihari",
+      "a": "ਗੁਰਿ",
+      "b": "ਗੁਰੀ",
+      "expect": [
+        "MATRA"
+      ]
+    },
+    {
+      "id": "matra-lavan-vs-dulavan",
+      "a": "ਨੇ",
+      "b": "ਨੈ",
+      "expect": [
+        "MATRA"
+      ]
+    },
+    {
+      "id": "matra-hora-vs-kanaura",
+      "a": "ਸੋ",
+      "b": "ਸੌ",
+      "expect": [
+        "MATRA"
+      ]
+    },
+    {
+      "id": "bindi-vs-tippi",
+      "a": "ਸੰਤ",
+      "b": "ਸਂਤ",
+      "expect": [
+        "BINDI_TIPPI"
+      ]
+    },
+    {
+      "id": "tippi-added",
+      "a": "ਸਬਦ",
+      "b": "ਸੰਬਦ",
+      "expect": [
+        "BINDI_TIPPI"
+      ]
+    },
+    {
+      "id": "visarg-added",
+      "a": "ਦੁਖ",
+      "b": "ਦੁਖਃ",
+      "expect": [
+        "VISARG"
+      ]
+    },
+    {
+      "id": "addak-added",
+      "a": "ਸਚ",
+      "b": "ਸੱਚ",
+      "expect": [
+        "ADDAK"
+      ]
+    },
+    {
+      "id": "nukta-added",
+      "a": "ਖਬਰ",
+      "b": "ਖ਼ਬਰ",
+      "expect": [
+        "NUKTA"
+      ]
+    },
+    {
+      "id": "encoding-precomposed-vs-decomposed",
+      "a": "ਸ਼ਬਦ",
+      "b": "ਸ਼ਬਦ",
+      "expect": [
+        "ENCODING"
+      ]
+    },
+    {
+      "id": "format-zwnj-inserted",
+      "a": "ਗੁਰ",
+      "b": "ਗੁ‌ਰ",
+      "expect": [
+        "FORMAT"
+      ]
+    },
+    {
+      "id": "punct-danda-vs-double",
+      "a": "ਨਾਮੁ ।",
+      "b": "ਨਾਮੁ ॥",
+      "expect": [
+        "PUNCT"
+      ]
+    },
+    {
+      "id": "punct-number-inside-dandas",
+      "a": "॥੧॥",
+      "b": "॥੨॥",
+      "expect": [
+        "CHAR"
+      ]
+    },
+    {
+      "id": "whitespace-double-space",
+      "a": "ਸਤਿ ਨਾਮੁ",
+      "b": "ਸਤਿ  ਨਾਮੁ",
+      "expect": [
+        "WHITESPACE"
+      ]
+    },
+    {
+      "id": "whitespace-nbsp",
+      "a": "ਸਤਿ ਨਾਮੁ",
+      "b": "ਸਤਿ ਨਾਮੁ",
+      "expect": [
+        "WHITESPACE"
+      ]
+    },
+    {
+      "id": "word-boundary-removed",
+      "a": "ਸਤਿ ਨਾਮੁ",
+      "b": "ਸਤਿਨਾਮੁ",
+      "expect": [
+        "WORD_BOUNDARY"
+      ]
+    },
+    {
+      "id": "word-boundary-added",
+      "a": "ਸਤਿਨਾਮੁ",
+      "b": "ਸਤਿ ਨਾਮੁ",
+      "expect": [
+        "WORD_BOUNDARY"
+      ]
+    },
+    {
+      "id": "line-break-added",
+      "a": "ਸਤਿ ਨਾਮੁ",
+      "b": "ਸਤਿ\nਨਾਮੁ",
+      "expect": [
+        "LINE_BREAK"
+      ]
+    },
+    {
+      "id": "trailing-space-added",
+      "a": "ਨਾਮੁ",
+      "b": "ਨਾਮੁ ",
+      "expect": [
+        "WHITESPACE"
+      ]
+    },
+    {
+      "id": "base-letter-changed",
+      "a": "ਕਰਤਾ",
+      "b": "ਕਰਤੀ",
+      "expect": [
+        "MATRA"
+      ]
+    },
+    {
+      "id": "base-consonant-changed",
+      "a": "ਪੁਰਖੁ",
+      "b": "ਪੁਰਸੁ",
+      "expect": [
+        "CHAR"
+      ]
+    },
+    {
+      "id": "conjunct-virama-added",
+      "a": "ਸਵਰ",
+      "b": "ਸ੍ਵਰ",
+      "expect": [
+        "CONJUNCT_MARK"
+      ]
+    },
+    {
+      "id": "mixed-matra-and-bindi",
+      "a": "ਗੁਰ",
+      "b": "ਗੂੰਰ",
+      "expect": [
+        "MIXED"
+      ]
+    },
+    {
+      "id": "two-separate-hunks",
+      "a": "ਸਤਿਗੁਰੁ ਪ੍ਰਸਾਦਿ",
+      "b": "ਸਤਿਗੁਰੂ ਪ੍ਰਸਾਦੁ",
+      "expect": [
+        "MATRA",
+        "MATRA"
+      ]
+    },
+    {
+      "id": "identical",
+      "a": "ੴ ਸਤਿ ਨਾਮੁ",
+      "b": "ੴ ਸਤਿ ਨਾਮੁ",
+      "expect": []
+    }
+  ],
+  "recover_cases": [
+    "ੴ",
+    "ਸ਼",
+    "ਸ਼",
+    "ਗੁ‌ਰ",
+    "ਗੁ‍ਰ",
+    "ਸ੍ਵਰ",
+    "ਸੱਚ",
+    "ਖ਼ਬਰ",
+    "ਦੁਖਃ",
+    "ਸਂਤ",
+    "ਸੰਤ",
+    "ਿਸ",
+    "ਸਤਿ  ਨਾਮੁ ",
+    "  ਸਤਿ\tਨਾਮੁ\r\n",
+    "॥੧॥ ਰਹਾਉ ॥",
+    "ਅ ਆ ਇ ਈ ਉ ਊ ਏ ਐ ਓ ਔ",
+    "੦੧੨੩੪੫੬੭੮੯",
+    "ਲ਼ ਲ਼",
+    "ੜ ਫ਼ ਜ਼ ਗ਼ ਖ਼",
+    "ੲ ੳ ੴ ੵ ੑ ੶"
+  ]
+}

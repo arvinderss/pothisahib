@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS source_normalizations;
+DROP TABLE IF EXISTS source_lines;
+DROP TABLE IF EXISTS source_documents;
+DROP TABLE IF EXISTS source_snapshots;
+DROP FUNCTION IF EXISTS kosh.source_snapshots_guard();
+DROP TABLE IF EXISTS sources;
+DROP TYPE IF EXISTS source_status;
+DROP TYPE IF EXISTS redistribution_status;
+DROP TYPE IF EXISTS source_type;

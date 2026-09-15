@@ -1,0 +1,10 @@
+DROP TABLE IF EXISTS anon_identities;
+DROP TABLE IF EXISTS sessions;
+DROP FUNCTION IF EXISTS kosh.user_had_role_at(bigint, role_name[], timestamptz);
+DROP TABLE IF EXISTS user_roles;
+DROP FUNCTION IF EXISTS kosh.require_mfa_for_privileged_role();
+DROP TABLE IF EXISTS user_mfa;
+DROP TABLE IF EXISTS user_security_answers;
+DROP TABLE IF EXISTS security_questions;
+DROP TABLE IF EXISTS users;
+DROP TYPE IF EXISTS role_name;

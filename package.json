@@ -1,0 +1,37 @@
+{
+  "name": "pothisahib",
+  "private": true,
+  "type": "module",
+  "version": "0.0.1",
+  "description": "Pothi Sahib (reader) and Gurbani Kosh (source-aware, versioned, human-verified Gurbani corpus).",
+  "license": "Apache-2.0",
+  "packageManager": "pnpm@10.12.1",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "lint": "eslint .",
+    "format": "prettier --check .",
+    "format:write": "prettier --write .",
+    "test": "pnpm -r --if-present run test",
+    "test:db": "pnpm --filter @pothisahib/corpus run test",
+    "kosh": "pnpm --filter @pothisahib/kosh-cli run kosh",
+    "migrate": "pnpm --filter @pothisahib/kosh-cli run kosh migrate",
+    "dev:public": "pnpm --filter @pothisahib/api run dev:public",
+    "dev:admin": "pnpm --filter @pothisahib/api run dev:admin",
+    "check:deps": "node scripts/check-dependency-allowlist.mjs",
+    "check:normalize": "node scripts/check-no-normalize.mjs",
+    "verify": "pnpm typecheck && pnpm lint && pnpm format && pnpm check:deps && pnpm check:normalize && pnpm test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.30.0",
+    "@types/node": "^22.15.0",
+    "eslint": "^9.30.0",
+    "globals": "^16.5.0",
+    "prettier": "^3.6.0",
+    "typescript": "^5.8.0",
+    "typescript-eslint": "^8.35.0",
+    "vitest": "^3.2.0"
+  }
+}

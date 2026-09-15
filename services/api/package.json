@@ -1,0 +1,31 @@
+{
+  "name": "@pothisahib/api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Gurbani Kosh HTTP services: the read-only public API (kosh_public role) and the authenticated administrative API (kosh_app role), run as two separate processes.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "dev:public": "tsx watch src/server-public.ts",
+    "dev:admin": "tsx watch src/server-admin.ts",
+    "start:public": "tsx src/server-public.ts",
+    "start:admin": "tsx src/server-admin.ts"
+  },
+  "dependencies": {
+    "@fastify/rate-limit": "^10.3.0",
+    "@fastify/swagger": "^9.5.0",
+    "@fastify/swagger-ui": "^5.2.0",
+    "@pothisahib/db": "workspace:*",
+    "@pothisahib/domain": "workspace:*",
+    "@pothisahib/gurmukhi": "workspace:*",
+    "@pothisahib/kosh-core": "workspace:*",
+    "fastify": "^5.4.0",
+    "tsx": "^4.20.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
+  }
+}

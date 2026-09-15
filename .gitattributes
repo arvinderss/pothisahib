@@ -1,0 +1,18 @@
+# Everything text is stored and checked out with LF, so shell scripts, Compose files and SQL run
+# unchanged inside containers regardless of the contributor's platform.
+* text=auto eol=lf
+*.sh   text eol=lf
+*.sql  text eol=lf
+*.ts   text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
+*.yml  text eol=lf
+Dockerfile text eol=lf
+
+# Gurmukhi fixtures must never be re-encoded or line-ending-converted by Git.
+packages/gurmukhi/fixtures/** -text
+
+# Binary
+*.png binary
+*.woff2 binary
+*.pdf binary

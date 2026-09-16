@@ -50,6 +50,13 @@ export default defineConfig({
     ...(httpsOptions ? { https: httpsOptions } : {}),
     proxy: { '/api': { target: 'http://127.0.0.1:8080', changeOrigin: true } },
   },
+  // `vite preview` serves the built app the same way, so an alpha build can be run and tested
+  // without deploying a separate static host in front of the public API.
+  preview: {
+    port: 4173,
+    ...(httpsOptions ? { https: httpsOptions } : {}),
+    proxy: { '/api': { target: 'http://127.0.0.1:8080', changeOrigin: true } },
+  },
   build: { target: 'es2022', sourcemap: true },
   test: { include: ['test/**/*.test.ts'], environment: 'node' },
 });

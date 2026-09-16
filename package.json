@@ -20,6 +20,7 @@
     "migrate": "pnpm --filter @pothisahib/kosh-cli run kosh migrate",
     "dev:public": "pnpm --filter @pothisahib/api run dev:public",
     "dev:admin": "pnpm --filter @pothisahib/api run dev:admin",
+    "package:alpha": "node scripts/package-alpha.mjs",
     "check:deps": "node scripts/check-dependency-allowlist.mjs",
     "check:normalize": "node scripts/check-no-normalize.mjs",
     "verify": "pnpm typecheck && pnpm lint && pnpm format && pnpm check:deps && pnpm check:normalize && pnpm test"

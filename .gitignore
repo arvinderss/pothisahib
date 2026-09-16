@@ -13,3 +13,4 @@ Thumbs.db
 .vitest/
 deployment/data/
 .certs/
+dist-alpha/

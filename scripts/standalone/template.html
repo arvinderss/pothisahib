@@ -388,6 +388,48 @@
         color: var(--fg);
         max-width: 92vw;
       }
+      /* floating settings button while reading */
+      .fab {
+        position: fixed;
+        right: 1rem;
+        bottom: calc(4.5rem + env(safe-area-inset-bottom));
+        width: 3.25rem;
+        height: 3.25rem;
+        border-radius: 50%;
+        font-size: 1.35rem;
+        background: var(--accent);
+        color: #fff;
+        border: 0;
+        box-shadow: 0 2px 10px rgb(0 0 0 / 0.25);
+        z-index: 8;
+      }
+      dialog.settings-panel {
+        width: 34rem;
+        max-width: 96vw;
+        max-height: 82vh;
+        margin: auto auto 0;
+        padding: 0;
+        border-radius: 0.9rem 0.9rem 0 0;
+        overflow: hidden;
+      }
+      dialog.settings-panel::backdrop {
+        background: rgb(0 0 0 / 0.35);
+      }
+      .panel-head {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        background: var(--panel);
+      }
+      .panel-body {
+        overflow: auto;
+        max-height: calc(82vh - 3rem);
+        padding: 0 0.9rem 1rem;
+      }
       @media print {
         nav.tabs,
         .bar,
@@ -407,9 +449,6 @@
     <main id="view"></main>
     <nav class="tabs" id="tabs" aria-label="Sections">
       <button data-tab="home" aria-current="page"><span class="ic">⌂</span>Home</button>
-      <button data-tab="pothi"><span class="ic">▤</span>Pothi</button>
-      <button data-tab="search"><span class="ic">⌕</span>Search</button>
-      <button data-tab="sehaj"><span class="ic">◫</span>Sehaj Paath</button>
       <button data-tab="settings"><span class="ic">⚙</span>Settings</button>
     </nav>
 
@@ -554,17 +593,24 @@
         for (const b of document.querySelectorAll('nav.tabs button'))
           b.toggleAttribute('aria-current', b.dataset.tab === route.tab);
         subEl.textContent = '';
-        ({
-          home: renderHome,
-          pothi: renderPothi,
-          search: renderSearch,
-          sehaj: renderSehaj,
-          settings: renderSettings,
-          read: renderRead,
-        })[route.tab]();
+        ({ home: renderHome, settings: renderSettingsPage, read: renderRead })[route.tab]();
       }
 
       // ---------------------------------------------------------------- home
+      /**
+       * The Nitnem order as recited. Where a source holds more than one recension of a Bani, the
+       * slug named here is the one shown; the others remain in their Granth below.
+       */
+      const NITNEM = [
+        'jap-ji-sahib',
+        'jaap-sahib',
+        'tav-prasad-savaiye-sravag-sudh',
+        'benti-chaupai-sahib',
+        'anand-sahib',
+        'rehras-sahib-s',
+        'sohila-sahib',
+      ];
+
       function renderHome() {
         titleEl.textContent = 'Pothi Sahib';
         const q = el('input', {
@@ -606,13 +652,34 @@
               continue;
             groups.set(b.granth, [...(groups.get(b.granth) ?? []), b]);
           }
+          if (!filter) {
+            const nitnem = NITNEM.map((s) => BY_SLUG.get(s)).filter(Boolean);
+            if (nitnem.length) holder.append(group('ਨਿਤਨੇਮ ਬਾਣੀਆਂ · Nitnem Baniya', nitnem, true));
+          }
           if (favs.length && !filter) holder.append(group('★ Favourites', favs));
           for (const [g, items] of groups) holder.append(group(g, items));
           if (!groups.size) holder.append(el('p', { class: 'muted', text: 'Nothing matches.' }));
         }
-        function group(name, items) {
+        function group(name, items, readAll) {
           return el('section', {}, [
             el('h2', { class: 'section', text: name }),
+            readAll
+              ? el('div', { class: 'row', style: 'margin-bottom:.4rem' }, [
+                  el('span', { class: 'small muted', text: 'Read all seven in order' }),
+                  el('div', { class: 'grow' }),
+                  el('button', {
+                    class: 'primary',
+                    text: 'Read Nitnem',
+                    onclick: () =>
+                      go({
+                        tab: 'read',
+                        slugs: items.map((b) => b.slug),
+                        key: 'nitnem',
+                        title: 'ਨਿਤਨੇਮ · Nitnem',
+                      }),
+                  }),
+                ])
+              : null,
             el(
               'ul',
               { class: 'list' },
@@ -653,271 +720,17 @@
         }
       }
 
-      // --------------------------------------------------------------- pothi
-      function renderPothi() {
-        titleEl.textContent = 'Your Pothis';
-        const nameInput = el('input', {
-          type: 'text',
-          placeholder: 'Morning Nitnem',
-          style: 'flex:1',
-        });
-        view.append(
-          el('p', {
-            class: 'muted small',
-            text: 'A Pothi is your own ordered selection of Banian, read end to end. Everything here stays on this device.',
-          }),
-          el('div', { class: 'row', style: 'margin-bottom:1rem' }, [
-            nameInput,
-            el('button', {
-              class: 'primary',
-              text: 'Create',
-              onclick: () => {
-                const n = nameInput.value.trim();
-                if (!n) return;
-                S.pothis = [
-                  ...S.pothis,
-                  { id: 'p' + Date.now().toString(36), name: n.slice(0, 60), slugs: [] },
-                ];
-                save();
-                render();
-              },
-            }),
-          ]),
-        );
-        if (!S.pothis.length)
-          view.append(el('p', { class: 'muted', text: 'No Pothi yet. Create one above.' }));
-        for (const p of S.pothis) {
-          const body = el('div', { hidden: true });
-          const card = el('div', { class: 'card' }, [
-            el('div', { class: 'row' }, [
-              el('strong', { text: p.name }),
-              el('span', { class: 'small muted', text: p.slugs.length + ' Banian' }),
-              el('div', { class: 'grow' }),
-              el('button', {
-                class: 'primary',
-                text: 'Read',
-                disabled: p.slugs.length === 0,
-                onclick: () =>
-                  go({ tab: 'read', slugs: p.slugs, key: 'pothi:' + p.id, title: p.name }),
-              }),
-              el('button', { text: 'Edit', onclick: () => (body.hidden = !body.hidden) }),
-            ]),
-            body,
-          ]);
-          const items = el('ol', { style: 'padding-left:1.2rem' });
-          p.slugs.forEach((slug, i) => {
-            items.append(
-              el('li', { class: 'row' }, [
-                el('span', { text: BY_SLUG.get(slug)?.name ?? slug }),
-                el('div', { class: 'grow' }),
-                el('button', {
-                  class: 'quiet hit',
-                  text: '↑',
-                  'aria-label': 'Move up',
-                  disabled: i === 0,
-                  onclick: () => move(p, i, -1),
-                }),
-                el('button', {
-                  class: 'quiet hit',
-                  text: '↓',
-                  'aria-label': 'Move down',
-                  disabled: i === p.slugs.length - 1,
-                  onclick: () => move(p, i, 1),
-                }),
-                el('button', {
-                  class: 'quiet hit',
-                  text: '✕',
-                  'aria-label': 'Remove',
-                  onclick: () => {
-                    p.slugs = p.slugs.filter((s) => s !== slug);
-                    save();
-                    render();
-                  },
-                }),
-              ]),
-            );
-          });
-          const add = el(
-            'select',
-            {
-              onchange: (e) => {
-                if (!e.target.value) return;
-                if (!p.slugs.includes(e.target.value)) p.slugs.push(e.target.value);
-                save();
-                render();
-              },
-            },
-            [el('option', { value: '', text: 'Add a Bani…' })].concat(
-              BANIS.filter((b) => !p.slugs.includes(b.slug)).map((b) =>
-                el('option', { value: b.slug, text: b.name }),
-              ),
-            ),
-          );
-          body.append(
-            items,
-            el('div', { class: 'row', style: 'margin-top:.5rem' }, [
-              add,
-              el('div', { class: 'grow' }),
-              el('button', {
-                class: 'quiet',
-                text: 'Delete Pothi',
-                onclick: () => {
-                  if (!confirm('Delete the Pothi "' + p.name + '"?')) return;
-                  S.pothis = S.pothis.filter((x) => x.id !== p.id);
-                  save();
-                  render();
-                },
-              }),
-            ]),
-          );
-          view.append(card);
-        }
-        function move(p, i, d) {
-          const [x] = p.slugs.splice(i, 1);
-          p.slugs.splice(i + d, 0, x);
-          save();
-          render();
-        }
-      }
-
-      // -------------------------------------------------------------- search
-      function renderSearch() {
-        titleEl.textContent = 'Searcher';
-        const mode = el('select', { onchange: run }, [
-          el('option', { value: 'first', text: 'First letters' }),
-          el('option', { value: 'full', text: 'Full word or phrase' }),
-        ]);
-        const scope = el(
-          'select',
-          { onchange: run },
-          [el('option', { value: '', text: 'All Banian' })].concat(
-            BANIS.map((b) => el('option', { value: b.slug, text: b.name })),
-          ),
-        );
-        const q = el('input', {
-          type: 'search',
-          placeholder: 'ਜਸਨ or ਸਤਿਗੁਰ',
-          style: 'width:100%',
-          oninput: run,
-        });
-        const results = el('div');
-        view.append(
-          q,
-          el('div', { class: 'row', style: 'margin:.6rem 0' }, [mode, scope]),
-          results,
-        );
-        q.focus();
-        function run() {
-          const term = q.value.trim();
-          results.replaceChildren();
-          if (term.length < 2) {
-            results.append(el('p', { class: 'muted small', text: 'Type at least two letters.' }));
-            return;
-          }
-          const pool = scope.value ? [BY_SLUG.get(scope.value)] : BANIS;
-          const hits = [];
-          for (const b of pool) {
-            for (let i = 0; i < b.lines.length && hits.length < 300; i++) {
-              const t = b.lines[i].t;
-              const ok = mode.value === 'full' ? t.includes(term) : firstLetters(t).includes(term);
-              if (ok) hits.push({ b, i, t });
-            }
-          }
-          results.append(
-            el('p', {
-              class: 'small muted',
-              text: hits.length + (hits.length === 300 ? '+ matches' : ' matches'),
-            }),
-          );
-          const list = el('ul', { class: 'list' });
-          for (const h of hits.slice(0, 300))
-            list.append(
-              el('li', {}, [
-                el(
-                  'button',
-                  {
-                    class: 'quiet',
-                    style: 'text-align:start;flex:1',
-                    onclick: () =>
-                      go({
-                        tab: 'read',
-                        slugs: [h.b.slug],
-                        key: h.b.slug,
-                        title: h.b.name,
-                        jump: h.i,
-                      }),
-                  },
-                  [
-                    el('div', { class: 'hitline', text: h.t }),
-                    el('div', { class: 'small muted', text: h.b.name + ' · line ' + (h.i + 1) }),
-                  ],
-                ),
-              ]),
-            );
-          results.append(list);
-        }
-      }
-
-      // ---------------------------------------------------------- sehaj paath
-      function renderSehaj() {
-        titleEl.textContent = 'Sehaj Paath';
-        view.append(
-          el('p', {
-            class: 'muted small',
-            text: 'Read long Banian a little at a time. Your place is kept for each one, and the progress below is how far you have reached.',
-          }),
-        );
-        const list = el('ul', { class: 'list' });
-        const started = BANIS.filter((b) => S.positions[b.slug]);
-        for (const b of started.length ? started : BANIS.filter((x) => x.lines.length > 300)) {
-          const pos = S.positions[b.slug];
-          const pct = pos ? Math.round(((pos.i + 1) / b.lines.length) * 100) : 0;
-          list.append(
-            el('li', {}, [
-              el('div', { style: 'flex:1' }, [
-                el('div', { text: b.name }),
-                el('div', {
-                  class: 'small muted',
-                  text: pct + '% · line ' + ((pos?.i ?? 0) + 1) + ' of ' + b.lines.length,
-                }),
-                el(
-                  'div',
-                  {
-                    style:
-                      'height:.35rem;border-radius:1rem;background:var(--border);margin-top:.3rem;overflow:hidden',
-                  },
-                  [el('div', { style: 'height:100%;width:' + pct + '%;background:var(--accent)' })],
-                ),
-              ]),
-              el('button', {
-                class: 'primary',
-                text: pos ? 'Continue' : 'Start',
-                onclick: () => go({ tab: 'read', slugs: [b.slug], key: b.slug, title: b.name }),
-              }),
-              pos
-                ? el('button', {
-                    class: 'quiet',
-                    text: 'Reset',
-                    onclick: () => {
-                      delete S.positions[b.slug];
-                      save();
-                      render();
-                    },
-                  })
-                : null,
-            ]),
-          );
-        }
-        view.append(list);
-      }
-
       // ------------------------------------------------------------ settings
-      function renderSettings() {
+      /** The settings page, and the same controls in the panel that floats over the text. */
+      function renderSettingsPage() {
         titleEl.textContent = 'Settings';
-        const rerender = () => {
+        buildSettings(view, () => {
           save();
           render();
-        };
+        });
+      }
+
+      function buildSettings(view, rerender) {
         const num = (get, set, step, min, max, fmt) => {
           const out = el('span', { text: fmt(get()) });
           return el('div', { class: 'row' }, [
@@ -1407,7 +1220,7 @@
             globalIndex++;
           });
         }
-        view.append(wrap, readerBar());
+        view.append(wrap, readerBar(), settingsFab());
         view.style.paddingBottom = '5rem';
 
         // restore position, or jump to a searched line
@@ -1526,13 +1339,62 @@
           el('button', {
             class: 'quiet hit',
             text: '⛶',
-            'aria-label': 'Full screen',
+            'aria-label': 'Full screen (settings are on the ⚙ button)',
             onclick: () => {
               if (document.fullscreenElement) document.exitFullscreen();
               else document.documentElement.requestFullscreen?.();
             },
           }),
         ]);
+      }
+
+      /**
+       * Floating settings button and the panel it opens. The panel sits over the text so a change
+       * can be judged against the Bani being read; anything that needs the text rebuilt (paragraph
+       * mode, headings, continuous reading) is applied when the panel is closed, and the reading
+       * position is restored afterwards.
+       */
+      function settingsFab() {
+        return el('button', {
+          class: 'fab',
+          text: '⚙',
+          'aria-label': 'Reading settings',
+          onclick: openSettingsPanel,
+        });
+      }
+
+      const STRUCTURAL = ['paragraph', 'showTitles', 'continuous'];
+      function openSettingsPanel() {
+        stopScroll();
+        const before = JSON.stringify(STRUCTURAL.map((k) => S[k]));
+        const body = el('div', { class: 'panel-body' });
+        const dlg = el('dialog', { class: 'settings-panel' }, [
+          el('div', { class: 'panel-head' }, [
+            el('strong', { text: 'Settings' }),
+            el('div', { class: 'grow' }),
+            el('button', {
+              class: 'quiet hit',
+              text: '✕',
+              'aria-label': 'Close',
+              onclick: () => dlg.close(),
+            }),
+          ]),
+          body,
+        ]);
+        const fill = () => {
+          body.replaceChildren();
+          buildSettings(body, () => {
+            save();
+            fill();
+          });
+        };
+        fill();
+        dlg.addEventListener('close', () => {
+          dlg.remove();
+          if (JSON.stringify(STRUCTURAL.map((k) => S[k])) !== before) render();
+        });
+        document.body.append(dlg);
+        dlg.showModal();
       }
 
       // ------------------------------------------------------- auto-scroll
@@ -1586,7 +1448,7 @@
       // tap the text to pause or resume; keyboard for desktop
       document.addEventListener('click', (e) => {
         if (route.tab !== 'read') return;
-        if (e.target.closest('button, a, input, select')) return;
+        if (e.target.closest('button, a, input, select, dialog, .bar')) return;
         if (window.getSelection()?.toString()) return;
         toggleScroll();
       });

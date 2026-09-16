@@ -26,8 +26,8 @@ import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { createInterface } from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
-import { migrate, openDb, withRole, type Db, type KoshRole } from '@pothisahib/db';
+import { dirname, join, resolve } from 'node:path';
+import { invocationDir, migrate, openDb, withRole, type Db, type KoshRole } from '@pothisahib/db';
 import {
   effectiveRole,
   isRole,
@@ -54,6 +54,7 @@ import {
   grantRole,
   ingestSnapshot,
   listSnapshots,
+  loadDotEnv,
   listSources,
   listVersions,
   parseSnapshot,
@@ -130,6 +131,7 @@ async function main(): Promise<void> {
     );
     return;
   }
+  loadDotEnv();
   const url = process.env['DATABASE_URL'] ?? 'pglite://./.data/kosh';
   if (!process.env['DATABASE_URL']) console.error(`DATABASE_URL not set; using ${url}`);
   const scopeRoles = process.env['KOSH_SCOPE_ROLES'] !== 'false';
@@ -138,7 +140,9 @@ async function main(): Promise<void> {
   const mfaKey =
     process.env['KOSH_MFA_KEY'] ?? (url.startsWith('pglite://') ? 'dev-insecure-mfa-key-0000' : '');
   if (!mfaKey) throw new Error('KOSH_MFA_KEY is required for a PostgreSQL database');
-  const store = new FsObjectStore(process.env['KOSH_OBJECT_STORE_DIR'] ?? '.data/objects');
+  const store = new FsObjectStore(
+    resolve(invocationDir(), process.env['KOSH_OBJECT_STORE_DIR'] ?? '.data/objects'),
+  );
   const appDb = scoped('kosh_app');
   const ingestDb = scoped('kosh_ingest');
   const appCtx: KoshContext = { db: appDb, store, mfaKey };

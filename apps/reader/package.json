@@ -1,0 +1,32 @@
+{
+  "name": "@pothisahib/reader",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pothi Sahib reader: offline-first PWA that downloads per-Bani bundles from Gurbani Kosh, verifies them, and reads them in Pad Ched or true Larivaar.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@pothisahib/domain": "workspace:*",
+    "@pothisahib/gurmukhi": "workspace:*",
+    "dexie": "^4.0.11",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "workbox-window": "^7.3.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "typescript": "^5.8.0",
+    "vite": "^7.1.0",
+    "vite-plugin-pwa": "^1.0.0",
+    "vitest": "^3.2.0"
+  }
+}

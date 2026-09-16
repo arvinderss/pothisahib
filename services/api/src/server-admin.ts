@@ -1,7 +1,9 @@
+import { loadDotEnv } from '@pothisahib/kosh-core';
 import { loadConfig } from './config.ts';
 import { openAdminContext } from './bootstrap.ts';
 import { buildAdminApp } from './admin/app.ts';
 
+loadDotEnv();
 const cfg = loadConfig();
 const ctx = await openAdminContext(cfg);
 const app = await buildAdminApp({ ctx, logger: true });

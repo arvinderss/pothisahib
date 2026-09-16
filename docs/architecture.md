@@ -8,6 +8,8 @@ describes what exists.
 ## Layers
 
 ```
+apps/reader           Pothi Sahib PWA (React + Vite + Dexie + Workbox): library, per-Bani bundle download with
+                      hash verification, offline reading, Pad Ched / true Larivaar, themes, device-local settings
 packages/gurmukhi     integrity core: codepoints, graphemes, offset tokens, diff kinds, the ONLY normaliser
 packages/domain       roles, permission matrix, state vocabularies, validators (no I/O)
 packages/db           Db abstraction (pg | PGlite), SET ROLE scoping, migration runner
@@ -62,6 +64,15 @@ PGlite is PostgreSQL compiled to WebAssembly. The test-suite and zero-setup deve
 identical SQL migrations on it in-process; production runs the same migrations on a PostgreSQL
 server. CI additionally applies, reverts and re-applies the migrations on a real `postgres:17`
 service. See [adr/0002-pglite-for-tests-and-development.md](adr/0002-pglite-for-tests-and-development.md).
+
+## Reader data contract
+
+The reader never receives loose text. It fetches `GET /api/v1/banis/{slug}/bundle` (`kosh-bundle/1`,
+defined in `packages/domain/src/bundle.ts`), recomputes every line hash and the bundle hash with Web
+Crypto, and only then stores the bundle in IndexedDB. Reads re-verify. A failed check shows an
+integrity error and never partial text (R-23). Pad Ched renders the exact stored text including its
+whitespace; Larivaar renders the same tokens joined with nothing between them. The service worker
+precaches only the app shell; API responses are never served from the SW cache.
 
 ## What is deliberately absent from the server
 

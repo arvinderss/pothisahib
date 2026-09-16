@@ -32,6 +32,16 @@ pnpm dev:public        # http://localhost:8080/api/docs
 pnpm dev:admin         # http://localhost:8081/admin/docs
 ```
 
+Run the reader against the public API (third terminal; Vite proxies `/api` to port 8080):
+
+```bash
+pnpm --filter @pothisahib/reader dev    # http://localhost:5173
+```
+
+A `.env` file at the repository root is loaded by the services and the CLI (existing environment
+variables win; nothing is logged). Relative `pglite://` and object-store paths resolve against the
+repository root whichever package script started the process.
+
 Note: a PGlite directory can be opened by **one process at a time**. For running both services
 plus the CLI concurrently, use a real PostgreSQL (`docker run postgres:17-alpine` or a local
 install) and set `DATABASE_URL=postgres://…`.

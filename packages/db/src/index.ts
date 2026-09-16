@@ -1,5 +1,5 @@
 export * from './types.ts';
-export { openDb } from './open.ts';
+export { openDb, invocationDir } from './open.ts';
 export { openPg } from './pg.ts';
 export { openPglite } from './pglite.ts';
 export { withRole } from './role.ts';

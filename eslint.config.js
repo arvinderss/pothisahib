@@ -21,7 +21,7 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.strict,
   {
-    files: ['**/*.ts', '**/*.mts', '**/*.js', '**/*.mjs'],
+    files: ['**/*.ts', '**/*.tsx', '**/*.mts', '**/*.js', '**/*.mjs'],
     languageOptions: { globals: { ...globals.node } },
     rules: {
       'no-restricted-syntax': ['error', NO_NORMALIZE],

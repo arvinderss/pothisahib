@@ -95,19 +95,26 @@ Earlier decisions (R-02 provisional adoption, R-03 licence gate, R-05/R-06/R-07 
 
 1. **Push to GitHub.** `git remote add origin https://github.com/arvinderss/pothisahib.git && git push -u origin main` with your credentials. CI will then run for the first time; expect to fix small environment issues in the `migrations-on-postgres` job.
 2. **Confirm Apache-2.0** (or say MIT) before the first public release.
-3. **Which external source first, and who reads its licence.** Recommended: Shabad OS or BaniDB for Nitnem; record licence + redistribution in `sources` before ingesting. Adoption from UNKNOWN/PROHIBITED sources is refused by the database.
+3. **Which external source first.** Licences have now been read (`docs/source-candidates.md`): **recommend Shabad OS** with the registry values proposed there; **BaniDB's terms are incompatible with adoption**. Please confirm, then the adapter and first real ingest proceed. Adoption from UNKNOWN/PROHIBITED sources is refused by the database.
 4. **Docker verification.** Install Docker Desktop (or use a VPS) and run the Compose topology once; record the result in `docs/deployment.md`. Rehearse `deployment/backup/*.sh`.
 5. (Non-blocking) R-21 anonymous forum posting; corpus licence label for the project's own accepted text (`docs/corpus-licensing.md`).
 
 ---
 
-## 8. Recommended next milestone
+## 8. Milestone 2 progress (2026-09-16, same day)
 
-**Milestone 2 — First real source and the reader's data contract.**
+Done and verified (`pnpm verify` green; 152 new/updated tests across api and reader; browser check of the reader against a live API and then with the API stopped):
 
-1. Write the first source adapter (Shabad OS or BaniDB → `kosh-source/1`), register the source with its verified licence, ingest and parse it, and adopt Nitnem Banis provisionally through the two-person path. This is the first real Gurbani in the system; every step is already enforced.
-2. Add `GET /api/v1/banis/{slug}/bundle`: a per-Bani offline bundle (lines + tokens + per-line SHA-256 + bundle hash, `ETag` = version) for the PWA (R-23), and `GET /api/v1/banis/{slug}/versions/{n}/lines` for history.
-3. Start `apps/reader` (React + Vite + Workbox + Dexie): library → Bani reader with Pad Ched / true Larivaar from token offsets, typography controls, themes, selective per-Bani download, byte-verified bundles, provisional-source tag. Reader-local bookmarks/positions only.
+- **Licence review** of the two candidate sources → `docs/source-candidates.md`. Shabad OS: MIT code, data marked public domain with a no-derogatory-treatment request → compatible. **BaniDB: Terms of Service require whole-database use, 90-day re-releases, contribution quotas and logo placement → incompatible with adoption**; comparison-only at most, pending Dharam's decision. No source has been registered.
+- **Migration 0008** `public_api.version_lines`; endpoints `GET /api/v1/banis/{slug}/versions/{n}/lines` and `GET /api/v1/banis/{slug}/bundle` (kosh-bundle/1, per-line + bundle SHA-256, ETag/304). Contract in `packages/domain/src/bundle.ts`.
+- **`apps/reader`** vertical slice: library grouped by Granth with verification badges, download → Web Crypto verification → IndexedDB, re-verification on read, offline reading, Pad Ched / true Larivaar, 5 themes + typography, provisional-source tag with attribution, reading position, device-local settings, Workbox app-shell precache (API never SW-cached), strict meta CSP. Builds to ~110 kB gzipped.
+- `.env` loader (no dependency) for services and CLI; relative data paths resolve to the repository root. `.claude/launch.json` in the parent folder starts `api-public`, `api-admin`, `reader` for the browser pane.
+
+Remaining for Milestone 2:
+
+1. **First real source** (blocked on Dharam: confirm Shabad OS as the first source and the registry values proposed in `docs/source-candidates.md`; confirm BaniDB is not registered or is PROHIBITED/comparison-only). Then: adapter `@shabados/database` SQLite → `kosh-source/1` (one document per Bani, sections from their structure), ingest, parse, bootstrap Nitnem Banis, adopt through the two-person path.
+2. Reader: bookmarks/favourites, Pothi Sahib builder (personal ordered lists), search UI over `/api/v1/search`, auto-scroll + wake-lock, keyboard navigation, install prompt, bundle update flow (ETag), font selection after the font licence audit (`docs/fonts.md`), Playwright e2e at phone/tablet/desktop/TV widths.
+3. CI first run after push; Docker verification.
 
 Then Milestone 3 (Shudh Roop reporting with anonymous identities and the correction issue model) per `docs/correction-workflow.md`.
 

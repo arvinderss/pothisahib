@@ -21,6 +21,8 @@ jobs:
       - run: pnpm check:deps
       - run: pnpm check:normalize
       - run: pnpm test
+      - name: Build the reader PWA
+        run: pnpm --filter @pothisahib/reader build
 
   migrations-on-postgres:
     # The identical SQL must also apply, revert and re-apply on a real PostgreSQL server.

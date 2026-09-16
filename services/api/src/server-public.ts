@@ -1,7 +1,9 @@
+import { loadDotEnv } from '@pothisahib/kosh-core';
 import { loadConfig } from './config.ts';
 import { openPublicDb } from './bootstrap.ts';
 import { buildPublicApp } from './public/app.ts';
 
+loadDotEnv();
 const cfg = loadConfig();
 const db = await openPublicDb(cfg);
 const app = await buildPublicApp({ db, corsOrigin: cfg.publicCorsOrigin, logger: true });

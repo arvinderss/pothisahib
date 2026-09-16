@@ -47,6 +47,14 @@ choice: a static host for the PWA (when it exists), a container host for the two
 a managed PostgreSQL free tier for `DATABASE_URL`, and a persistent volume or S3-compatible
 bucket for objects. Moving hosts is a change of environment variables plus a backup/restore.
 
+## The reader
+
+`pnpm --filter @pothisahib/reader build` produces a static site in `apps/reader/dist` (app shell,
+service worker, manifest). Host it on any static host; set `VITE_API_BASE` at build time to the
+public API origin (default `/api/v1`, i.e. same origin behind one reverse proxy). Serve it with
+`Content-Security-Policy` and `X-Frame-Options: DENY` headers at the host (the meta CSP in
+`index.html` is a fallback and cannot express `frame-ancestors`).
+
 ## Health checks
 
 `GET /health` on both services returns `{"status":"ok"}` once the database connection is usable.

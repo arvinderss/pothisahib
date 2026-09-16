@@ -18,11 +18,14 @@ A working, tested corpus spine:
 - **Public read-only API** (`kosh_public` database role, GET only, OpenAPI) and a separate **authenticated admin API** (`kosh_app`), plus an operator **CLI**.
 - **Tests: 257 passing** across integrity core, database adapter, database invariants (on real PostgreSQL via PGlite), services, HTTP workflow and a per-endpoint × per-role security matrix, including an end-to-end Unicode round trip.
 
-Not yet built: the reader/PWA, Shudh Roop correction reporting, source alignment/variance explorer, audio, forum, events. See `docs/requirements-traceability.md`.
+**Milestone 2 (in progress):** offline bundle endpoint with per-line and bundle SHA-256 and ETags; public text of historical versions; and the first vertical slice of the **Pothi Sahib reader PWA** (`apps/reader`): library, per-Bani download with hash verification into IndexedDB, offline reading, Pad Ched / true Larivaar, five themes and typography controls, provisional-source tag. Licence review of candidate sources is in `docs/source-candidates.md`.
+
+Not yet built: bookmarks/Pothi Sahib builder, search UI, Shudh Roop correction reporting, source alignment/variance explorer, audio, forum, events. See `docs/requirements-traceability.md`.
 
 ## Layout
 
 ```
+apps/reader         Pothi Sahib PWA (React + Vite + Dexie + Workbox)
 packages/gurmukhi   integrity core (depends on nothing)
 packages/domain     roles, permission matrix, vocabularies, validators
 packages/db         Db abstraction (pg | PGlite), SET ROLE scoping, migration runner

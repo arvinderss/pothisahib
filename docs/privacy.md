@@ -24,6 +24,13 @@ records and, more importantly, what it structurally cannot record.
 - **Reading behaviour never reaches the server**: bookmarks, favourites, positions, history and personal edits are reader-local by design (decision D-4).
 - Corpus statistics are derived from corpus and decision records only.
 
+## The reader
+
+`apps/reader` stores downloaded bundles, the library catalogue, settings and reading positions in
+the browser's IndexedDB only. It makes GET requests to the public API with `credentials: 'omit'`
+and `referrerPolicy: 'no-referrer'`, has no analytics, and its Content Security Policy allows no
+third-party origin. Nothing about reading behaviour leaves the device.
+
 ## Transient processing
 
 The admin API rate limiter keeps per-connection counters in process memory for at most one minute

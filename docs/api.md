@@ -14,23 +14,27 @@ no-referrer`, `X-Frame-Options: DENY`, `Content-Security-Policy: default-src 'no
 
 ## Public API (read-only)
 
-| Route                                                       | Returns                                                                                                                |
-| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `GET /health`                                               | `{status:"ok"}`                                                                                                        |
-| `GET /api/v1/banis`                                         | Banis with granth, `verificationState`, `publishedVersionNo`, `textAvailable`                                          |
-| `GET /api/v1/banis/{slug}`                                  | Bani + section tree                                                                                                    |
-| `GET /api/v1/banis/{slug}/lines`                            | Published accepted text, byte-exact, with `sha256`, `codepointCount`, `graphemeCount` and `tokens: [cpStart, cpEnd][]` |
-| `GET /api/v1/banis/{slug}/versions`                         | Version history (published/superseded) with decision kind and rationale                                                |
-| `GET /api/v1/sources`                                       | Source registry with licence and redistribution status                                                                 |
-| `GET /api/v1/sources/{slug}/snapshots`                      | Provenance: hash, size, fetch time, declared version of every snapshot                                                 |
-| `GET /api/v1/search?q=&first_letters=&bani=&limit=&offset=` | Published lines matching exact text / comparison form / first letters, with match offsets                              |
-| `GET /api/v1/statistics`                                    | Counts derived from corpus and decision records only                                                                   |
+| Route                                                       | Returns                                                                                                                                              |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /health`                                               | `{status:"ok"}`                                                                                                                                      |
+| `GET /api/v1/banis`                                         | Banis with granth, `verificationState`, `publishedVersionNo`, `textAvailable`                                                                        |
+| `GET /api/v1/banis/{slug}`                                  | Bani + section tree                                                                                                                                  |
+| `GET /api/v1/banis/{slug}/lines`                            | Published accepted text, byte-exact, with `sha256`, `codepointCount`, `graphemeCount` and `tokens: [cpStart, cpEnd][]`                               |
+| `GET /api/v1/banis/{slug}/versions`                         | Version history (published/superseded) with decision kind and rationale                                                                              |
+| `GET /api/v1/banis/{slug}/versions/{n}/lines`               | Byte-exact text of one historical version (published or superseded; drafts never)                                                                    |
+| `GET /api/v1/banis/{slug}/bundle`                           | Offline bundle `kosh-bundle/1`: lines + offsets + sections + lineage source + per-line and bundle SHA-256; `ETag` per version, `If-None-Match` → 304 |
+| `GET /api/v1/sources`                                       | Source registry with licence and redistribution status                                                                                               |
+| `GET /api/v1/sources/{slug}/snapshots`                      | Provenance: hash, size, fetch time, declared version of every snapshot                                                                               |
+| `GET /api/v1/search?q=&first_letters=&bani=&limit=&offset=` | Published lines matching exact text / comparison form / first letters, with match offsets                                                            |
+| `GET /api/v1/statistics`                                    | Counts derived from corpus and decision records only                                                                                                 |
 
 Only PUBLISHED text whose lineage-root source is ALLOWED or ATTRIBUTION_REQUIRED is ever returned
 (view-level gate). Responses carry `Cache-Control: public, max-age=300` and permissive CORS
 (`PUBLIC_CORS_ORIGIN`). The route table contains only GET/HEAD; a test asserts it.
 
-Planned additions (later phases): translations, transliterations, correction history, downloadable datasets, ETags per version.
+Bundle verification (client side, see `apps/reader/src/lib/bundle.ts`): `sha256(utf8(text)) == sha256` for every line, token offsets within `[0, codepointCount]` and non-overlapping, and `sha256(lineShas.join('\n')) == bundleSha256`. The reader stores and renders a bundle only after this passes, and re-verifies on every read.
+
+Planned additions (later phases): translations, transliterations, correction history, downloadable datasets.
 
 ## Admin API (authenticated)
 

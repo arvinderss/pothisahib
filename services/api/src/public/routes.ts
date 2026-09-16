@@ -1,5 +1,12 @@
+import { createHash } from 'node:crypto';
 import type { Db } from '@pothisahib/db';
-import { isSlug } from '@pothisahib/domain';
+import {
+  BUNDLE_FORMAT,
+  bundleHashInput,
+  isSlug,
+  type Bundle,
+  type BundleLine,
+} from '@pothisahib/domain';
 import {
   firstLetterKey,
   fromCodepoints,
@@ -384,6 +391,152 @@ export async function registerPublicRoutes(app: FastifyInstance, opts: Opts): Pr
       const r = await db.query<Record<string, unknown>>('SELECT * FROM public_api.statistics');
       const s = r.rows[0] ?? {};
       return Object.fromEntries(Object.entries(s).map(([k, v]) => [k, Number(v)]));
+    },
+  );
+
+  app.get<{ Params: { slug: string; n: string } }>(
+    '/banis/:slug/versions/:n/lines',
+    {
+      schema: {
+        tags: [TAG_CORPUS],
+        summary:
+          'Text of one historical version (published or superseded), byte-exact, with word offsets',
+        params: {
+          type: 'object',
+          properties: { slug: { type: 'string' }, n: { type: 'string', pattern: '^[0-9]{1,6}$' } },
+          required: ['slug', 'n'],
+        },
+        response: { 200: { type: 'object', additionalProperties: true }, 404: ERROR_SCHEMA },
+      },
+    },
+    async (req) => {
+      const row = await baniBySlug(db, req.params.slug);
+      const r = await db.query<Record<string, unknown>>(
+        `SELECT vl.version_id, vl.version_no, vl.status, vl.basis, vl.published_at, vl.line_id, vl.section_id, vl.ordinal,
+                vl.text, vl.text_sha256_hex, vl.codepoint_count,
+                (SELECT json_agg(json_build_array(t.cp_start, t.cp_end) ORDER BY t.ordinal) FROM public_api.tokens t WHERE t.layout_id = vl.layout_id) AS tokens
+         FROM public_api.version_lines vl WHERE vl.bani_id = $1 AND vl.version_no = $2 ORDER BY vl.ordinal`,
+        [str(row['id']), Number(req.params.n)],
+      );
+      const first = r.rows[0];
+      if (!first) throw new NotFoundError('version');
+      return {
+        bani: { id: str(row['id']), slug: str(row['slug']), name: str(row['name']) },
+        versionNo: Number(first['version_no']),
+        status: first['status'],
+        basis: first['basis'],
+        publishedAt: iso(first['published_at']),
+        lines: r.rows.map((x) => ({
+          lineId: str(x['line_id']),
+          sectionId: str(x['section_id']),
+          ordinal: Number(x['ordinal']),
+          text: str(x['text']),
+          sha256: str(x['text_sha256_hex']),
+          codepointCount: Number(x['codepoint_count']),
+          tokens: (typeof x['tokens'] === 'string'
+            ? JSON.parse(x['tokens'] as string)
+            : (x['tokens'] ?? [])) as [number, number][],
+        })),
+      };
+    },
+  );
+
+  app.get<{ Params: { slug: string } }>(
+    '/banis/:slug/bundle',
+    {
+      schema: {
+        tags: [TAG_CORPUS],
+        summary:
+          'Offline bundle for one Bani: published text, offsets, sections, lineage source, per-line and bundle SHA-256 (kosh-bundle/1)',
+        description:
+          'Verify before storing: sha256(utf8(text)) must equal `sha256` for every line and sha256 of the LF-joined line hashes must equal `bundleSha256`. ' +
+          'ETag identifies the version; send If-None-Match to get 304.',
+        params: { type: 'object', properties: { slug: { type: 'string' } }, required: ['slug'] },
+        response: {
+          200: { type: 'object', additionalProperties: true },
+          304: { type: 'null' },
+          404: ERROR_SCHEMA,
+        },
+      },
+    },
+    async (req, reply) => {
+      const row = await baniBySlug(db, req.params.slug);
+      const baniId = str(row['id']);
+      if (!row['text_available']) throw new NotFoundError('published text');
+      const r = await db.query<Record<string, unknown>>(
+        `SELECT l.line_id, l.section_id, l.ordinal, l.version_no, l.basis, l.basis_source_id, l.text, l.text_sha256_hex, l.codepoint_count,
+                (SELECT json_agg(json_build_array(t.cp_start, t.cp_end) ORDER BY t.ordinal) FROM public_api.tokens t WHERE t.layout_id = l.layout_id) AS tokens
+         FROM public_api.lines l WHERE l.bani_id = $1 ORDER BY l.ordinal`,
+        [baniId],
+      );
+      const first = r.rows[0];
+      if (!first) throw new NotFoundError('published text');
+      const lines: BundleLine[] = r.rows.map((x) => ({
+        lineId: str(x['line_id']),
+        sectionId: str(x['section_id']),
+        ordinal: Number(x['ordinal']),
+        text: str(x['text']),
+        sha256: str(x['text_sha256_hex']),
+        codepointCount: Number(x['codepoint_count']),
+        tokens: (typeof x['tokens'] === 'string'
+          ? JSON.parse(x['tokens'] as string)
+          : (x['tokens'] ?? [])) as [number, number][],
+      }));
+      const bundleSha256 = createHash('sha256')
+        .update(bundleHashInput(lines.map((l) => l.sha256)), 'utf8')
+        .digest('hex');
+      const etag = `"v${Number(first['version_no'])}-${bundleSha256.slice(0, 16)}"`;
+      if (req.headers['if-none-match'] === etag) {
+        reply.code(304).header('ETag', etag);
+        return null;
+      }
+      const sections = await db.query<Record<string, unknown>>(
+        'SELECT id, parent_section_id, section_type, ordinal, label FROM public_api.sections WHERE bani_id = $1 ORDER BY parent_section_id NULLS FIRST, ordinal, id',
+        [baniId],
+      );
+      const src = await db.query<Record<string, unknown>>(
+        'SELECT slug, name, license, redistribution, attribution_text, last_synced_at FROM public_api.sources WHERE id = $1',
+        [str(first['basis_source_id'])],
+      );
+      const s = src.rows[0];
+      const bundle: Bundle = {
+        format: BUNDLE_FORMAT,
+        bani: {
+          id: baniId,
+          slug: str(row['slug']),
+          name: str(row['name']),
+          verificationState: str(row['verification_state']),
+          granth: { slug: str(row['granth_slug']), name: str(row['granth_name']) },
+        },
+        versionNo: Number(first['version_no']),
+        basis: str(first['basis']),
+        publishedAt: iso(row['published_at']),
+        source: s
+          ? {
+              slug: str(s['slug']),
+              name: str(s['name']),
+              license: (s['license'] as string | null) ?? null,
+              redistribution: str(s['redistribution']),
+              attributionText: (s['attribution_text'] as string | null) ?? null,
+              lastSyncedAt: iso(s['last_synced_at']),
+            }
+          : null,
+        sections: sections.rows.map((x) => ({
+          id: str(x['id']),
+          parentId:
+            x['parent_section_id'] === null || x['parent_section_id'] === undefined
+              ? null
+              : str(x['parent_section_id']),
+          type: str(x['section_type']),
+          ordinal: Number(x['ordinal']),
+          label: (x['label'] as string | null) ?? null,
+        })),
+        lines,
+        bundleSha256,
+        generatedAt: new Date().toISOString(),
+      };
+      reply.header('ETag', etag);
+      return bundle;
     },
   );
 }

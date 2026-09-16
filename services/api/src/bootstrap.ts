@@ -1,4 +1,5 @@
-import { openDb, withRole, type Db } from '@pothisahib/db';
+import { resolve } from 'node:path';
+import { invocationDir, openDb, withRole, type Db } from '@pothisahib/db';
 import { FsObjectStore, type KoshContext } from '@pothisahib/kosh-core';
 import type { ApiConfig } from './config.ts';
 
@@ -13,5 +14,9 @@ export async function openAdminContext(cfg: ApiConfig): Promise<KoshContext> {
   const db = cfg.appDatabaseUrl
     ? await openDb(cfg.appDatabaseUrl)
     : withRole(await openDb(cfg.databaseUrl), 'kosh_app');
-  return { db, store: new FsObjectStore(cfg.objectStoreDir), mfaKey: cfg.mfaKey };
+  return {
+    db,
+    store: new FsObjectStore(resolve(invocationDir(), cfg.objectStoreDir)),
+    mfaKey: cfg.mfaKey,
+  };
 }

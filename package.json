@@ -21,16 +21,20 @@
     "dev:public": "pnpm --filter @pothisahib/api run dev:public",
     "dev:admin": "pnpm --filter @pothisahib/api run dev:admin",
     "package:alpha": "node scripts/package-alpha.mjs",
+    "build:standalone": "tsx scripts/build-standalone.ts",
     "check:deps": "node scripts/check-dependency-allowlist.mjs",
     "check:normalize": "node scripts/check-no-normalize.mjs",
     "verify": "pnpm typecheck && pnpm lint && pnpm format && pnpm check:deps && pnpm check:normalize && pnpm test"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.0",
+    "@pothisahib/db": "workspace:*",
+    "@pothisahib/kosh-core": "workspace:*",
     "@types/node": "^22.15.0",
     "eslint": "^9.30.0",
     "globals": "^16.5.0",
     "prettier": "^3.6.0",
+    "tsx": "^4.23.13",
     "typescript": "^5.8.0",
     "typescript-eslint": "^8.35.0",
     "vitest": "^3.2.0"

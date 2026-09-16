@@ -1,0 +1,1624 @@
+<!doctype html>
+<html lang="pa">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'"
+    />
+    <title>Pothi Sahib</title>
+    <style>
+      :root {
+        --bg: #f7f3ea;
+        --panel: #fffdf8;
+        --fg: #2b2a27;
+        --muted: #6b675f;
+        --border: #e2dccd;
+        --accent: #6b4f2a;
+        --gurbani: #3a2a12;
+        --title: #8c3b52;
+        --assist: #b3560f;
+        --v-long: #c8102e;
+        --v-med: #e09b00;
+        --v-short: #e2711d;
+        --ui: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        --gur:
+          'Gurbani Akhar', 'Noto Sans Gurmukhi', 'Nirmala UI', 'Raavi', 'Mukta Mahee', sans-serif;
+        --size: 28px;
+        --lh: 2.2;
+        --weight: 700;
+        --align: center;
+      }
+      [data-theme='dark'] {
+        --bg: #131313;
+        --panel: #1d1d1c;
+        --fg: #ecebe6;
+        --muted: #a7a49c;
+        --border: #34332f;
+        --accent: #d9b77a;
+        --gurbani: #f2ead9;
+        --title: #e79ab0;
+        --assist: #ffb26b;
+      }
+      [data-theme='sepia'] {
+        --bg: #efe6d4;
+        --panel: #f7f0e1;
+        --fg: #3a3226;
+        --muted: #6f6450;
+        --border: #ddd0b6;
+        --gurbani: #3c2c10;
+      }
+      [data-theme='nirmala'] {
+        --bg: #fdeee9;
+        --panel: #fff6f2;
+        --fg: #3a2b28;
+        --muted: #7a6560;
+        --border: #f0d7cf;
+        --accent: #a8442a;
+        --gurbani: #47210f;
+        --title: #a8442a;
+      }
+      [data-theme='nihung'] {
+        --bg: #0a0a1a;
+        --panel: #12122a;
+        --fg: #e8e6ff;
+        --muted: #9a97c0;
+        --border: #262551;
+        --accent: #f0c419;
+        --gurbani: #f5d67b;
+        --title: #7fd1ff;
+        --assist: #ffd77a;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: var(--bg);
+        color: var(--fg);
+        font-family: var(--ui);
+        font-size: 16px;
+        padding-bottom: 5.5rem;
+        -webkit-text-size-adjust: 100%;
+      }
+      header.top {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        padding: 0.6rem 1rem;
+        background: var(--panel);
+        border-bottom: 1px solid var(--border);
+      }
+      header.top h1 {
+        font-size: 1.05rem;
+        margin: 0;
+        font-weight: 600;
+      }
+      .grow {
+        flex: 1;
+      }
+      main {
+        max-width: 52rem;
+        margin: 0 auto;
+        padding: 1rem;
+      }
+      button,
+      select,
+      input[type='text'],
+      input[type='search'] {
+        font: inherit;
+        color: inherit;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 0.5rem;
+        padding: 0.4rem 0.7rem;
+        min-height: 2.25rem;
+      }
+      button {
+        cursor: pointer;
+      }
+      button.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: transparent;
+      }
+      button.quiet {
+        background: transparent;
+        border-color: transparent;
+        color: var(--muted);
+      }
+      button:disabled {
+        opacity: 0.45;
+        cursor: default;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .small {
+        font-size: 0.85rem;
+      }
+      .row {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 0.6rem;
+        padding: 0.75rem;
+        margin-bottom: 0.6rem;
+      }
+      .setting {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+        padding: 0.6rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .setting:last-child {
+        border-bottom: 0;
+      }
+      .setting label {
+        flex: 1;
+      }
+      .setting .desc {
+        display: block;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+      h2.section {
+        color: var(--accent);
+        font-size: 1.1rem;
+        margin: 1.4rem 0 0.4rem;
+      }
+      /* switch */
+      .sw {
+        position: relative;
+        width: 3rem;
+        height: 1.65rem;
+        border-radius: 1rem;
+        background: var(--border);
+        border: 0;
+        flex: none;
+        padding: 0;
+      }
+      .sw::after {
+        content: '';
+        position: absolute;
+        top: 0.15rem;
+        left: 0.15rem;
+        width: 1.35rem;
+        height: 1.35rem;
+        border-radius: 50%;
+        background: var(--panel);
+        transition: transform 0.15s;
+      }
+      .sw[aria-checked='true'] {
+        background: var(--accent);
+      }
+      .sw[aria-checked='true']::after {
+        transform: translateX(1.35rem);
+      }
+      /* bottom tab bar */
+      nav.tabs {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        background: var(--panel);
+        border-top: 1px solid var(--border);
+        padding-bottom: env(safe-area-inset-bottom);
+        z-index: 6;
+      }
+      nav.tabs button {
+        flex: 1;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        padding: 0.5rem 0.25rem;
+        font-size: 0.72rem;
+        color: var(--muted);
+        display: grid;
+        gap: 0.15rem;
+        justify-items: center;
+      }
+      nav.tabs button[aria-current='page'] {
+        color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 10%, transparent);
+      }
+      nav.tabs .ic {
+        font-size: 1.15rem;
+      }
+      /* text */
+      .text {
+        font-family: var(--gur);
+        font-size: var(--size);
+        line-height: var(--lh);
+        font-weight: var(--weight);
+        text-align: var(--align);
+        color: var(--gurbani);
+        margin: 0 auto;
+      }
+      .line {
+        margin: 0.15em 0;
+        scroll-margin-top: 4rem;
+      }
+      .line.bk {
+        box-shadow: inset 0.3rem 0 0 var(--accent);
+        padding-left: 0.4rem;
+      }
+      .w {
+        cursor: default;
+      }
+      [data-larivaar='on'] .gap {
+        display: none;
+      }
+      [data-larivaar='on'][data-assist='on'] .w:nth-child(even of .w) {
+        color: var(--assist);
+      }
+      [data-vishraam='colored'] .v2 {
+        color: var(--v-long);
+      }
+      [data-vishraam='colored'] .v1 {
+        color: var(--v-med);
+      }
+      [data-vishraam='colored'] .v0 {
+        color: var(--v-short);
+      }
+      [data-vishraam='underline'] .v2,
+      [data-vishraam='underline'] .v1,
+      [data-vishraam='underline'] .v0 {
+        text-decoration: underline dotted;
+      }
+      [data-vishraam='spaced'] .v2::after {
+        content: '\2003';
+      }
+      [data-vishraam='spaced'] .v1::after {
+        content: '\2002';
+      }
+      [data-paragraph='on'] .line {
+        display: inline;
+      }
+      [data-paragraph='on'] .sec-body {
+        display: block;
+        margin-bottom: 1em;
+      }
+      h2.sec {
+        font-family: var(--ui);
+        font-size: 0.8rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--title);
+        text-align: center;
+        margin: 1.4em 0 0.6em;
+        font-weight: 600;
+      }
+      h2.bani-title {
+        font-family: var(--gur);
+        color: var(--title);
+        text-align: center;
+        font-size: calc(var(--size) * 0.8);
+        margin: 1.5em 0 0.3em;
+      }
+      .prov {
+        font-family: var(--ui);
+        font-size: 0.78rem;
+        color: var(--muted);
+        text-align: center;
+        max-width: 40rem;
+        margin: 0 auto 1rem;
+        line-height: 1.5;
+      }
+      /* reader control bar */
+      .bar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        gap: 0.4rem;
+        align-items: center;
+        padding: 0.5rem 0.75rem calc(0.5rem + env(safe-area-inset-bottom));
+        background: var(--panel);
+        border-top: 1px solid var(--border);
+        z-index: 7;
+        flex-wrap: wrap;
+      }
+      .bar input[type='range'] {
+        flex: 1;
+        min-width: 6rem;
+      }
+      .hit {
+        min-width: 2.6rem;
+      }
+      ul.list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      ul.list li {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        padding: 0.55rem 0;
+        border-bottom: 1px solid var(--border);
+        flex-wrap: wrap;
+      }
+      ul.list li:last-child {
+        border-bottom: 0;
+      }
+      .pill {
+        font-size: 0.7rem;
+        padding: 0.1rem 0.45rem;
+        border-radius: 1rem;
+        border: 1px solid var(--border);
+        color: var(--muted);
+      }
+      .hitline {
+        font-family: var(--gur);
+        font-size: 1.15rem;
+        color: var(--gurbani);
+      }
+      mark {
+        background: color-mix(in srgb, var(--accent) 30%, transparent);
+        color: inherit;
+      }
+      .swatch {
+        width: 2rem;
+        height: 2rem;
+        padding: 0;
+        border-radius: 50%;
+        border: 1px solid var(--border);
+      }
+      dialog {
+        border: 1px solid var(--border);
+        border-radius: 0.6rem;
+        background: var(--panel);
+        color: var(--fg);
+        max-width: 92vw;
+      }
+      @media print {
+        nav.tabs,
+        .bar,
+        header.top {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="top">
+      <button class="quiet" id="back" hidden aria-label="Back">←</button>
+      <h1 id="title">Pothi Sahib</h1>
+      <div class="grow"></div>
+      <span class="small muted" id="sub"></span>
+    </header>
+    <main id="view"></main>
+    <nav class="tabs" id="tabs" aria-label="Sections">
+      <button data-tab="home" aria-current="page"><span class="ic">⌂</span>Home</button>
+      <button data-tab="pothi"><span class="ic">▤</span>Pothi</button>
+      <button data-tab="search"><span class="ic">⌕</span>Search</button>
+      <button data-tab="sehaj"><span class="ic">◫</span>Sehaj Paath</button>
+      <button data-tab="settings"><span class="ic">⚙</span>Settings</button>
+    </nav>
+
+    <script id="kosh-data" type="application/json">
+      "__KOSH_DATA__"
+    </script>
+    <script>
+      'use strict';
+      // ---------------------------------------------------------------- data
+      const DATA = JSON.parse(document.getElementById('kosh-data').textContent);
+      const BANIS = DATA.banis;
+      const BY_SLUG = new Map(BANIS.map((b) => [b.slug, b]));
+      const cps = (s) => Array.from(s);
+
+      // Gurmukhi letters, for first-letter search. Matras, bindi and the like are not letters.
+      const NON_LETTER = new Set(cps('ਁਂਃ਼ਾਿੀੁੂੇੈੋੌ੍ੑੰੱੵ'));
+      const firstLetters = (text) =>
+        text
+          .split(/\s+/)
+          .filter(Boolean)
+          .map((w) => cps(w).find((c) => !NON_LETTER.has(c)) ?? '')
+          .join('');
+
+      // ------------------------------------------------------------ settings
+      const DEFAULTS = {
+        theme: 'light',
+        larivaar: false,
+        larivaarAssist: true,
+        vishraam: true,
+        vishraamStyle: 'colored',
+        paragraph: false,
+        continuous: false,
+        keepAwake: true,
+        showTitles: true,
+        size: 28,
+        lh: 2.2,
+        weight: 700,
+        align: 'center',
+        font: "'Noto Sans Gurmukhi', 'Nirmala UI', sans-serif",
+        speed: 40,
+        colors: {},
+        favourites: [],
+        pothis: [],
+        positions: {},
+        bookmarks: {},
+        sehaj: {},
+      };
+      const KEY = 'pothi-sahib-standalone';
+      let S = load();
+      function load() {
+        try {
+          return { ...DEFAULTS, ...(JSON.parse(localStorage.getItem(KEY)) || {}) };
+        } catch {
+          return { ...DEFAULTS };
+        }
+      }
+      function save() {
+        try {
+          localStorage.setItem(KEY, JSON.stringify(S));
+        } catch {
+          /* private mode: settings simply do not persist */
+        }
+        applyTheme();
+      }
+      const COLOR_VARS = [
+        ['gurbani', 'Gurbani'],
+        ['title', 'Titles'],
+        ['assist', 'Larivaar Assist'],
+        ['v-long', 'Long Vishraam'],
+        ['v-med', 'Medium Vishraam'],
+        ['v-short', 'Short Vishraam'],
+        ['bg', 'Background'],
+      ];
+      function applyTheme() {
+        const r = document.documentElement;
+        r.dataset.theme = S.theme;
+        r.dataset.larivaar = S.larivaar ? 'on' : 'off';
+        r.dataset.assist = S.larivaarAssist ? 'on' : 'off';
+        r.dataset.vishraam = S.vishraam ? S.vishraamStyle : 'off';
+        r.dataset.paragraph = S.paragraph ? 'on' : 'off';
+        const st = r.style;
+        st.setProperty('--size', S.size + 'px');
+        st.setProperty('--lh', String(S.lh));
+        st.setProperty('--weight', String(S.weight));
+        st.setProperty('--align', S.align);
+        st.setProperty('--gur', S.font);
+        for (const [k] of COLOR_VARS) {
+          const v = S.colors[k];
+          if (v) st.setProperty('--' + k, v);
+          else st.removeProperty('--' + k);
+        }
+      }
+
+      // ---------------------------------------------------------------- view
+      const view = document.getElementById('view');
+      const titleEl = document.getElementById('title');
+      const subEl = document.getElementById('sub');
+      const backEl = document.getElementById('back');
+      let route = { tab: 'home' };
+
+      const el = (tag, attrs = {}, kids = []) => {
+        const n = document.createElement(tag);
+        for (const [k, v] of Object.entries(attrs)) {
+          if (k === 'class') n.className = v;
+          else if (k === 'text') n.textContent = v;
+          else if (k === 'html') n.innerHTML = v;
+          else if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
+          else if (v !== null && v !== false && v !== undefined)
+            n.setAttribute(k, v === true ? '' : v);
+        }
+        for (const kid of [].concat(kids)) if (kid) n.append(kid);
+        return n;
+      };
+      const sw = (checked, onchange, label) =>
+        el('button', {
+          class: 'sw',
+          role: 'switch',
+          'aria-checked': String(!!checked),
+          'aria-label': label,
+          onclick: () => onchange(!checked),
+        });
+      const setting = (label, control, desc) =>
+        el('div', { class: 'setting' }, [
+          el('label', {}, [
+            document.createTextNode(label),
+            desc ? el('span', { class: 'desc', text: desc }) : null,
+          ]),
+          control,
+        ]);
+
+      function go(r) {
+        route = r;
+        stopScroll();
+        render();
+        window.scrollTo(0, 0);
+      }
+
+      function render() {
+        view.replaceChildren();
+        backEl.hidden = route.tab !== 'read';
+        document.getElementById('tabs').hidden = route.tab === 'read';
+        for (const b of document.querySelectorAll('nav.tabs button'))
+          b.toggleAttribute('aria-current', b.dataset.tab === route.tab);
+        subEl.textContent = '';
+        ({
+          home: renderHome,
+          pothi: renderPothi,
+          search: renderSearch,
+          sehaj: renderSehaj,
+          settings: renderSettings,
+          read: renderRead,
+        })[route.tab]();
+      }
+
+      // ---------------------------------------------------------------- home
+      function renderHome() {
+        titleEl.textContent = 'Pothi Sahib';
+        const q = el('input', {
+          type: 'search',
+          placeholder: 'Filter Banian…',
+          style: 'width:100%;margin-bottom:.75rem',
+          oninput: (e) => draw(e.target.value.trim().toLowerCase()),
+        });
+        const holder = el('div');
+        view.append(q, holder);
+        const resume = Object.entries(S.positions)
+          .filter(([k]) => BY_SLUG.has(k))
+          .sort((a, b) => b[1].at - a[1].at)[0];
+        if (resume)
+          view.prepend(
+            el('div', { class: 'card row' }, [
+              el('span', { text: 'Continue ' + BY_SLUG.get(resume[0]).name }),
+              el('div', { class: 'grow' }),
+              el('button', {
+                class: 'primary',
+                text: 'Resume',
+                onclick: () =>
+                  go({
+                    tab: 'read',
+                    slugs: [resume[0]],
+                    key: resume[0],
+                    title: BY_SLUG.get(resume[0]).name,
+                  }),
+              }),
+            ]),
+          );
+        draw('');
+        function draw(filter) {
+          holder.replaceChildren();
+          const favs = BANIS.filter((b) => S.favourites.includes(b.slug));
+          const groups = new Map();
+          for (const b of BANIS) {
+            if (filter && !(b.name.toLowerCase().includes(filter) || b.slug.includes(filter)))
+              continue;
+            groups.set(b.granth, [...(groups.get(b.granth) ?? []), b]);
+          }
+          if (favs.length && !filter) holder.append(group('★ Favourites', favs));
+          for (const [g, items] of groups) holder.append(group(g, items));
+          if (!groups.size) holder.append(el('p', { class: 'muted', text: 'Nothing matches.' }));
+        }
+        function group(name, items) {
+          return el('section', {}, [
+            el('h2', { class: 'section', text: name }),
+            el(
+              'ul',
+              { class: 'list' },
+              items.map((b) =>
+                el('li', {}, [
+                  el('button', {
+                    class: 'quiet hit',
+                    text: S.favourites.includes(b.slug) ? '★' : '☆',
+                    'aria-label': 'Favourite ' + b.name,
+                    onclick: () => {
+                      S.favourites = S.favourites.includes(b.slug)
+                        ? S.favourites.filter((s) => s !== b.slug)
+                        : [...S.favourites, b.slug];
+                      save();
+                      render();
+                    },
+                  }),
+                  el(
+                    'button',
+                    {
+                      class: 'quiet',
+                      style: 'text-align:left;flex:1',
+                      onclick: () =>
+                        go({ tab: 'read', slugs: [b.slug], key: b.slug, title: b.name }),
+                    },
+                    [
+                      el('div', { text: b.name }),
+                      el('div', {
+                        class: 'small muted',
+                        text: b.lines.length + ' lines · ' + b.state.toLowerCase(),
+                      }),
+                    ],
+                  ),
+                ]),
+              ),
+            ),
+          ]);
+        }
+      }
+
+      // --------------------------------------------------------------- pothi
+      function renderPothi() {
+        titleEl.textContent = 'Your Pothis';
+        const nameInput = el('input', {
+          type: 'text',
+          placeholder: 'Morning Nitnem',
+          style: 'flex:1',
+        });
+        view.append(
+          el('p', {
+            class: 'muted small',
+            text: 'A Pothi is your own ordered selection of Banian, read end to end. Everything here stays on this device.',
+          }),
+          el('div', { class: 'row', style: 'margin-bottom:1rem' }, [
+            nameInput,
+            el('button', {
+              class: 'primary',
+              text: 'Create',
+              onclick: () => {
+                const n = nameInput.value.trim();
+                if (!n) return;
+                S.pothis = [
+                  ...S.pothis,
+                  { id: 'p' + Date.now().toString(36), name: n.slice(0, 60), slugs: [] },
+                ];
+                save();
+                render();
+              },
+            }),
+          ]),
+        );
+        if (!S.pothis.length)
+          view.append(el('p', { class: 'muted', text: 'No Pothi yet. Create one above.' }));
+        for (const p of S.pothis) {
+          const body = el('div', { hidden: true });
+          const card = el('div', { class: 'card' }, [
+            el('div', { class: 'row' }, [
+              el('strong', { text: p.name }),
+              el('span', { class: 'small muted', text: p.slugs.length + ' Banian' }),
+              el('div', { class: 'grow' }),
+              el('button', {
+                class: 'primary',
+                text: 'Read',
+                disabled: p.slugs.length === 0,
+                onclick: () =>
+                  go({ tab: 'read', slugs: p.slugs, key: 'pothi:' + p.id, title: p.name }),
+              }),
+              el('button', { text: 'Edit', onclick: () => (body.hidden = !body.hidden) }),
+            ]),
+            body,
+          ]);
+          const items = el('ol', { style: 'padding-left:1.2rem' });
+          p.slugs.forEach((slug, i) => {
+            items.append(
+              el('li', { class: 'row' }, [
+                el('span', { text: BY_SLUG.get(slug)?.name ?? slug }),
+                el('div', { class: 'grow' }),
+                el('button', {
+                  class: 'quiet hit',
+                  text: '↑',
+                  'aria-label': 'Move up',
+                  disabled: i === 0,
+                  onclick: () => move(p, i, -1),
+                }),
+                el('button', {
+                  class: 'quiet hit',
+                  text: '↓',
+                  'aria-label': 'Move down',
+                  disabled: i === p.slugs.length - 1,
+                  onclick: () => move(p, i, 1),
+                }),
+                el('button', {
+                  class: 'quiet hit',
+                  text: '✕',
+                  'aria-label': 'Remove',
+                  onclick: () => {
+                    p.slugs = p.slugs.filter((s) => s !== slug);
+                    save();
+                    render();
+                  },
+                }),
+              ]),
+            );
+          });
+          const add = el(
+            'select',
+            {
+              onchange: (e) => {
+                if (!e.target.value) return;
+                if (!p.slugs.includes(e.target.value)) p.slugs.push(e.target.value);
+                save();
+                render();
+              },
+            },
+            [el('option', { value: '', text: 'Add a Bani…' })].concat(
+              BANIS.filter((b) => !p.slugs.includes(b.slug)).map((b) =>
+                el('option', { value: b.slug, text: b.name }),
+              ),
+            ),
+          );
+          body.append(
+            items,
+            el('div', { class: 'row', style: 'margin-top:.5rem' }, [
+              add,
+              el('div', { class: 'grow' }),
+              el('button', {
+                class: 'quiet',
+                text: 'Delete Pothi',
+                onclick: () => {
+                  if (!confirm('Delete the Pothi "' + p.name + '"?')) return;
+                  S.pothis = S.pothis.filter((x) => x.id !== p.id);
+                  save();
+                  render();
+                },
+              }),
+            ]),
+          );
+          view.append(card);
+        }
+        function move(p, i, d) {
+          const [x] = p.slugs.splice(i, 1);
+          p.slugs.splice(i + d, 0, x);
+          save();
+          render();
+        }
+      }
+
+      // -------------------------------------------------------------- search
+      function renderSearch() {
+        titleEl.textContent = 'Searcher';
+        const mode = el('select', { onchange: run }, [
+          el('option', { value: 'first', text: 'First letters' }),
+          el('option', { value: 'full', text: 'Full word or phrase' }),
+        ]);
+        const scope = el(
+          'select',
+          { onchange: run },
+          [el('option', { value: '', text: 'All Banian' })].concat(
+            BANIS.map((b) => el('option', { value: b.slug, text: b.name })),
+          ),
+        );
+        const q = el('input', {
+          type: 'search',
+          placeholder: 'ਜਸਨ or ਸਤਿਗੁਰ',
+          style: 'width:100%',
+          oninput: run,
+        });
+        const results = el('div');
+        view.append(
+          q,
+          el('div', { class: 'row', style: 'margin:.6rem 0' }, [mode, scope]),
+          results,
+        );
+        q.focus();
+        function run() {
+          const term = q.value.trim();
+          results.replaceChildren();
+          if (term.length < 2) {
+            results.append(el('p', { class: 'muted small', text: 'Type at least two letters.' }));
+            return;
+          }
+          const pool = scope.value ? [BY_SLUG.get(scope.value)] : BANIS;
+          const hits = [];
+          for (const b of pool) {
+            for (let i = 0; i < b.lines.length && hits.length < 300; i++) {
+              const t = b.lines[i].t;
+              const ok = mode.value === 'full' ? t.includes(term) : firstLetters(t).includes(term);
+              if (ok) hits.push({ b, i, t });
+            }
+          }
+          results.append(
+            el('p', {
+              class: 'small muted',
+              text: hits.length + (hits.length === 300 ? '+ matches' : ' matches'),
+            }),
+          );
+          const list = el('ul', { class: 'list' });
+          for (const h of hits.slice(0, 300))
+            list.append(
+              el('li', {}, [
+                el(
+                  'button',
+                  {
+                    class: 'quiet',
+                    style: 'text-align:start;flex:1',
+                    onclick: () =>
+                      go({
+                        tab: 'read',
+                        slugs: [h.b.slug],
+                        key: h.b.slug,
+                        title: h.b.name,
+                        jump: h.i,
+                      }),
+                  },
+                  [
+                    el('div', { class: 'hitline', text: h.t }),
+                    el('div', { class: 'small muted', text: h.b.name + ' · line ' + (h.i + 1) }),
+                  ],
+                ),
+              ]),
+            );
+          results.append(list);
+        }
+      }
+
+      // ---------------------------------------------------------- sehaj paath
+      function renderSehaj() {
+        titleEl.textContent = 'Sehaj Paath';
+        view.append(
+          el('p', {
+            class: 'muted small',
+            text: 'Read long Banian a little at a time. Your place is kept for each one, and the progress below is how far you have reached.',
+          }),
+        );
+        const list = el('ul', { class: 'list' });
+        const started = BANIS.filter((b) => S.positions[b.slug]);
+        for (const b of started.length ? started : BANIS.filter((x) => x.lines.length > 300)) {
+          const pos = S.positions[b.slug];
+          const pct = pos ? Math.round(((pos.i + 1) / b.lines.length) * 100) : 0;
+          list.append(
+            el('li', {}, [
+              el('div', { style: 'flex:1' }, [
+                el('div', { text: b.name }),
+                el('div', {
+                  class: 'small muted',
+                  text: pct + '% · line ' + ((pos?.i ?? 0) + 1) + ' of ' + b.lines.length,
+                }),
+                el(
+                  'div',
+                  {
+                    style:
+                      'height:.35rem;border-radius:1rem;background:var(--border);margin-top:.3rem;overflow:hidden',
+                  },
+                  [el('div', { style: 'height:100%;width:' + pct + '%;background:var(--accent)' })],
+                ),
+              ]),
+              el('button', {
+                class: 'primary',
+                text: pos ? 'Continue' : 'Start',
+                onclick: () => go({ tab: 'read', slugs: [b.slug], key: b.slug, title: b.name }),
+              }),
+              pos
+                ? el('button', {
+                    class: 'quiet',
+                    text: 'Reset',
+                    onclick: () => {
+                      delete S.positions[b.slug];
+                      save();
+                      render();
+                    },
+                  })
+                : null,
+            ]),
+          );
+        }
+        view.append(list);
+      }
+
+      // ------------------------------------------------------------ settings
+      function renderSettings() {
+        titleEl.textContent = 'Settings';
+        const rerender = () => {
+          save();
+          render();
+        };
+        const num = (get, set, step, min, max, fmt) => {
+          const out = el('span', { text: fmt(get()) });
+          return el('div', { class: 'row' }, [
+            out,
+            el('button', {
+              class: 'hit',
+              text: '−',
+              onclick: () => {
+                set(Math.max(min, +(get() - step).toFixed(2)));
+                out.textContent = fmt(get());
+                save();
+              },
+            }),
+            el('button', {
+              class: 'hit',
+              text: '+',
+              onclick: () => {
+                set(Math.min(max, +(get() + step).toFixed(2)));
+                out.textContent = fmt(get());
+                save();
+              },
+            }),
+          ]);
+        };
+        const sel = (value, options, onchange) =>
+          el(
+            'select',
+            {
+              onchange: (e) => {
+                onchange(e.target.value);
+                rerender();
+              },
+            },
+            options.map(([v, t]) => el('option', { value: v, text: t, selected: v === value })),
+          );
+
+        view.append(el('h2', { class: 'section', text: 'General' }));
+        const general = el('div', { class: 'card' }, [
+          setting(
+            'Keep Screen Awake',
+            sw(
+              S.keepAwake,
+              (v) => {
+                S.keepAwake = v;
+                rerender();
+              },
+              'Keep screen awake',
+            ),
+          ),
+          setting(
+            'Larivaar',
+            sw(
+              S.larivaar,
+              (v) => {
+                S.larivaar = v;
+                rerender();
+              },
+              'Larivaar',
+            ),
+            'Continuous script with no spaces between words',
+          ),
+          setting(
+            'Larivaar Assist',
+            sw(
+              S.larivaarAssist,
+              (v) => {
+                S.larivaarAssist = v;
+                rerender();
+              },
+              'Larivaar assist',
+            ),
+            'Colour alternate words so the eye can separate them',
+          ),
+          setting(
+            'Paragraph Mode',
+            sw(
+              S.paragraph,
+              (v) => {
+                S.paragraph = v;
+                rerender();
+              },
+              'Paragraph mode',
+            ),
+            'Group lines into blocks instead of one line each',
+          ),
+          setting(
+            'Continuous Reading',
+            sw(
+              S.continuous,
+              (v) => {
+                S.continuous = v;
+                rerender();
+              },
+              'Continuous reading',
+            ),
+            'Hide headings and provenance for undisturbed paath',
+          ),
+          setting(
+            'Show Vishraams',
+            sw(
+              S.vishraam,
+              (v) => {
+                S.vishraam = v;
+                rerender();
+              },
+              'Show vishraams',
+            ),
+            'Pause marks carried from the source, never added to the text',
+          ),
+          setting(
+            'Vishraam style',
+            sel(
+              S.vishraamStyle,
+              [
+                ['colored', 'Colored'],
+                ['underline', 'Underlined'],
+                ['spaced', 'Spaced'],
+              ],
+              (v) => (S.vishraamStyle = v),
+            ),
+          ),
+          setting(
+            'Show titles',
+            sw(
+              S.showTitles,
+              (v) => {
+                S.showTitles = v;
+                rerender();
+              },
+              'Show titles',
+            ),
+            'Section headings inside a Bani',
+          ),
+        ]);
+        view.append(general);
+
+        view.append(el('h2', { class: 'section', text: 'Colours' }));
+        const themes = el(
+          'div',
+          { class: 'row', style: 'justify-content:center;gap:.75rem;margin:.5rem 0' },
+          [
+            ['light', 'Light'],
+            ['dark', 'Dark'],
+            ['sepia', 'Sepia'],
+            ['nirmala', 'Nirmala'],
+            ['nihung', 'Nihung'],
+          ].map(([v, t]) =>
+            el(
+              'button',
+              {
+                class: 'quiet',
+                style: 'display:grid;justify-items:center;gap:.25rem',
+                onclick: () => {
+                  S.theme = v;
+                  S.colors = {};
+                  rerender();
+                },
+              },
+              [
+                el('span', {
+                  style:
+                    'width:3rem;height:3rem;border-radius:50%;border:2px solid ' +
+                    (S.theme === v ? 'var(--accent)' : 'var(--border)') +
+                    ';background:' +
+                    {
+                      light: '#eceae4',
+                      dark: '#141414',
+                      sepia: '#efe6d4',
+                      nirmala: '#fdeee9',
+                      nihung: '#0a0a1a',
+                    }[v],
+                }),
+                el('span', { class: 'small', text: t }),
+              ],
+            ),
+          ),
+        );
+        const colours = el(
+          'div',
+          { class: 'card' },
+          COLOR_VARS.map(([k, label]) =>
+            setting(
+              label,
+              el('input', {
+                type: 'color',
+                class: 'swatch',
+                value: S.colors[k] ?? currentVar('--' + k),
+                oninput: (e) => {
+                  S.colors[k] = e.target.value;
+                  save();
+                },
+              }),
+            ),
+          ),
+        );
+        view.append(
+          themes,
+          colours,
+          el('button', {
+            class: 'quiet',
+            text: 'Clear custom colours',
+            onclick: () => {
+              S.colors = {};
+              rerender();
+            },
+          }),
+        );
+
+        view.append(el('h2', { class: 'section', text: 'Font' }));
+        view.append(
+          el('div', { class: 'card' }, [
+            el('p', { class: 'text', style: 'margin:.5rem 0', text: 'ੴ ਸ੍ਰੀ ਵਾਹਿਗੁਰੂ ਜੀ ਕੀ ਫਤਿਹ' }),
+            setting(
+              'Gurbani size',
+              num(
+                () => S.size,
+                (v) => (S.size = v),
+                1,
+                14,
+                72,
+                (v) => v + ' px',
+              ),
+            ),
+            setting(
+              'Line spacing',
+              num(
+                () => S.lh,
+                (v) => (S.lh = v),
+                0.1,
+                1,
+                4,
+                (v) => v.toFixed(1),
+              ),
+            ),
+            setting(
+              'Spacing preset',
+              el(
+                'div',
+                { class: 'row' },
+                [
+                  ['Compact', 1.4],
+                  ['Normal', 1.8],
+                  ['Comfortable', 2.2],
+                  ['Spacious', 2.8],
+                ].map(([t, v]) =>
+                  el('button', {
+                    text: t,
+                    class: S.lh === v ? 'primary' : '',
+                    onclick: () => {
+                      S.lh = v;
+                      rerender();
+                    },
+                  }),
+                ),
+              ),
+            ),
+            setting(
+              'Font',
+              sel(
+                S.font,
+                [
+                  ["'Noto Sans Gurmukhi', 'Nirmala UI', sans-serif", 'Noto Sans Gurmukhi'],
+                  ["'Nirmala UI', sans-serif", 'Nirmala UI'],
+                  [
+                    "'Gurbani Akhar', 'Noto Sans Gurmukhi', sans-serif",
+                    'Gurbani Akhar (if installed)',
+                  ],
+                  ["'Mukta Mahee', sans-serif", 'Mukta Mahee (if installed)'],
+                  ['serif', 'System serif'],
+                ],
+                (v) => (S.font = v),
+              ),
+              'Only fonts already on this device are used; none are bundled',
+            ),
+            setting(
+              'Font weight',
+              sel(
+                String(S.weight),
+                [
+                  ['400', 'Normal'],
+                  ['600', 'Medium'],
+                  ['700', 'Bold'],
+                ],
+                (v) => (S.weight = +v),
+              ),
+            ),
+            setting(
+              'Text alignment',
+              sel(
+                S.align,
+                [
+                  ['center', 'Centre'],
+                  ['start', 'Start'],
+                  ['justify', 'Justify'],
+                ],
+                (v) => (S.align = v),
+              ),
+            ),
+          ]),
+        );
+
+        view.append(el('h2', { class: 'section', text: 'Reading' }));
+        view.append(
+          el('div', { class: 'card' }, [
+            setting(
+              'Auto-scroll speed',
+              num(
+                () => S.speed,
+                (v) => (S.speed = v),
+                5,
+                5,
+                400,
+                (v) => v + ' px/s',
+              ),
+            ),
+          ]),
+        );
+
+        view.append(el('h2', { class: 'section', text: 'Backup & Restore' }));
+        view.append(
+          el('div', { class: 'card' }, [
+            el('p', {
+              class: 'small muted',
+              text: 'Save your settings, Pothis, favourites, bookmarks and reading progress to a file, and restore them on any device. No Gurbani is included; the text is already in this file.',
+            }),
+            el('div', { class: 'row' }, [
+              el('button', { class: 'primary', text: 'Export', onclick: exportBackup }),
+              el('button', { text: 'Import', onclick: importBackup }),
+              el('div', { class: 'grow' }),
+              el('button', {
+                class: 'quiet',
+                text: 'Restore default settings',
+                onclick: () => {
+                  if (
+                    !confirm(
+                      'Restore all settings to their defaults? Your Pothis and bookmarks are kept.',
+                    )
+                  )
+                    return;
+                  const keep = {
+                    favourites: S.favourites,
+                    pothis: S.pothis,
+                    positions: S.positions,
+                    bookmarks: S.bookmarks,
+                    sehaj: S.sehaj,
+                  };
+                  S = { ...DEFAULTS, ...keep };
+                  rerender();
+                },
+              }),
+            ]),
+          ]),
+        );
+
+        view.append(el('h2', { class: 'section', text: 'About' }));
+        const total = BANIS.reduce((n, b) => n + b.lines.length, 0);
+        view.append(
+          el('div', { class: 'card small muted' }, [
+            el('p', {
+              text:
+                'Pothi Sahib — single-file build. ' +
+                BANIS.length +
+                ' Banian, ' +
+                total +
+                ' lines.',
+            }),
+            el('p', {
+              text:
+                'Built ' +
+                new Date(DATA.builtAt).toLocaleString() +
+                ' from commit ' +
+                DATA.commit +
+                '.',
+            }),
+            el('p', {
+              text:
+                'Text adopted from: ' +
+                [...new Set(BANIS.map((b) => b.source.name).filter(Boolean))].join(', ') +
+                '. It is PROVISIONAL: adopted from a source and not yet reviewed line by line against printed editions.',
+            }),
+            el('p', {
+              text: [...new Set(BANIS.map((b) => b.source.attribution).filter(Boolean))].join(' '),
+            }),
+            el('p', {
+              text: 'Nothing here is sent anywhere. There is no account, no analytics and no network request of any kind.',
+            }),
+          ]),
+        );
+      }
+      const currentVar = (name) => {
+        const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        if (/^#[0-9a-f]{6}$/i.test(v)) return v;
+        return '#000000';
+      };
+      function exportBackup() {
+        const payload = {
+          format: 'pothi-sahib-backup/1',
+          savedAt: new Date().toISOString(),
+          settings: S,
+        };
+        const url = URL.createObjectURL(
+          new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }),
+        );
+        const a = el('a', { href: url, download: 'pothi-sahib-backup.json' });
+        document.body.append(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+      function importBackup() {
+        const input = el('input', { type: 'file', accept: 'application/json,.json' });
+        input.addEventListener('change', async () => {
+          const file = input.files && input.files[0];
+          if (!file) return;
+          try {
+            const parsed = JSON.parse(await file.text());
+            if (parsed.format !== 'pothi-sahib-backup/1')
+              throw new Error('not a Pothi Sahib backup');
+            S = { ...DEFAULTS, ...parsed.settings };
+            save();
+            render();
+            alert('Restored.');
+          } catch (e) {
+            alert('Could not restore: ' + e.message);
+          }
+        });
+        input.click();
+      }
+
+      // ---------------------------------------------------------------- read
+      let scroller = null;
+      let wakeLock = null;
+      function renderRead() {
+        const list = route.slugs.map((s) => BY_SLUG.get(s)).filter(Boolean);
+        titleEl.textContent = route.title;
+        const wrap = el('div', { class: 'text' });
+        let globalIndex = 0;
+        const indexOfLine = [];
+        for (const b of list) {
+          if (list.length > 1 && !S.continuous)
+            wrap.append(el('h2', { class: 'bani-title', text: b.name }));
+          if (!S.continuous)
+            wrap.append(
+              el('p', {
+                class: 'prov',
+                text:
+                  (b.state === 'PROVISIONAL' ? 'Provisional text' : 'Reviewed text') +
+                  ' · version ' +
+                  b.versionNo +
+                  (b.source.name ? ' · adopted from ' + b.source.name : '') +
+                  (b.source.attribution ? ' · ' + b.source.attribution : ''),
+              }),
+            );
+          let lastSection = -1;
+          let para = null;
+          b.lines.forEach((line, i) => {
+            if (S.showTitles && !S.continuous && line.s !== lastSection && b.sections.length > 1) {
+              const sec = b.sections[line.s];
+              const label = ['BODY', 'BANI_SECTION'].includes(sec.t)
+                ? 'Section ' + (sec.l ?? line.s + 1)
+                : sec.t.toLowerCase() + (sec.l ? ' ' + sec.l : '');
+              wrap.append(el('h2', { class: 'sec', text: label }));
+              para = null;
+            }
+            lastSection = line.s;
+            if (S.paragraph && !para) {
+              para = el('div', { class: 'sec-body' });
+              wrap.append(para);
+            }
+            const id = b.slug + ':' + i;
+            const p = el('p', {
+              class: 'line' + (S.bookmarks[id] ? ' bk' : ''),
+              id: 'l' + globalIndex,
+              'data-id': id,
+              'data-i': String(i),
+              'data-slug': b.slug,
+              ondblclick: () => {
+                if (S.bookmarks[id]) delete S.bookmarks[id];
+                else S.bookmarks[id] = { at: Date.now(), text: line.t.slice(0, 40) };
+                save();
+                p.classList.toggle('bk');
+              },
+            });
+            p.append(...renderLine(line));
+            (S.paragraph ? para : wrap).append(p);
+            indexOfLine.push(p);
+            globalIndex++;
+          });
+        }
+        view.append(wrap, readerBar());
+        view.style.paddingBottom = '5rem';
+
+        // restore position, or jump to a searched line
+        const key = route.key;
+        requestAnimationFrame(() => {
+          let target = null;
+          if (route.jump !== undefined) target = indexOfLine[route.jump];
+          else if (S.positions[key]) target = indexOfLine[S.positions[key].i];
+          if (target) target.scrollIntoView({ block: 'center' });
+        });
+
+        // remember the topmost visible line
+        const io = new IntersectionObserver(
+          (entries) => {
+            const top = entries
+              .filter((e) => e.isIntersecting)
+              .sort((a, b2) => a.boundingClientRect.top - b2.boundingClientRect.top)[0];
+            if (!top) return;
+            const i = indexOfLine.indexOf(top.target);
+            S.positions[key] = { i, at: Date.now() };
+            if (route.slugs.length === 1)
+              S.positions[route.slugs[0]] = { i: +top.target.dataset.i, at: Date.now() };
+            try {
+              localStorage.setItem(KEY, JSON.stringify(S));
+            } catch {}
+          },
+          { rootMargin: '-15% 0px -70% 0px' },
+        );
+        indexOfLine.forEach((p) => io.observe(p));
+        cleanup.push(() => io.disconnect());
+        if (S.keepAwake) requestWakeLock();
+      }
+
+      /** Words and pause marks as spans; the text itself is never altered. */
+      function renderLine(line) {
+        const chars = cps(line.t);
+        const vish = new Map((line.v ?? []).map(([cp, kind]) => [cp, kind]));
+        const nodes = [];
+        let prev = 0;
+        const slice = (a, b) => chars.slice(a, b).join('');
+        (line.w.length ? line.w : [[0, chars.length]]).forEach(([s, e], idx) => {
+          if (s > prev) nodes.push(el('span', { class: 'gap', text: slice(prev, s) }));
+          const kind = vish.get(e) ?? vish.get(e - 1);
+          nodes.push(
+            el('span', {
+              class: 'w' + (kind !== undefined ? ' v' + kind : ''),
+              text: slice(s, e),
+            }),
+          );
+          prev = e;
+        });
+        if (prev < chars.length)
+          nodes.push(el('span', { class: 'gap', text: slice(prev, chars.length) }));
+        return nodes;
+      }
+
+      function readerBar() {
+        const speedOut = el('span', { class: 'small muted', text: S.speed + ' px/s' });
+        const play = el('button', {
+          class: 'primary hit',
+          text: '▶',
+          'aria-label': 'Start auto-scroll',
+          onclick: toggleScroll,
+        });
+        playBtn = play;
+        return el('div', { class: 'bar' }, [
+          el('button', {
+            class: 'quiet hit',
+            text: '←',
+            'aria-label': 'Back',
+            onclick: () => go({ tab: 'home' }),
+          }),
+          play,
+          el('input', {
+            type: 'range',
+            min: '5',
+            max: '400',
+            step: '5',
+            value: String(S.speed),
+            'aria-label': 'Auto-scroll speed',
+            oninput: (e) => {
+              S.speed = +e.target.value;
+              speedOut.textContent = S.speed + ' px/s';
+              save();
+            },
+          }),
+          speedOut,
+          el('button', {
+            class: 'quiet hit',
+            text: 'ਲ',
+            title: 'Larivaar',
+            'aria-label': 'Toggle Larivaar',
+            onclick: () => {
+              S.larivaar = !S.larivaar;
+              save();
+            },
+          }),
+          el('button', {
+            class: 'quiet hit',
+            text: 'A−',
+            'aria-label': 'Smaller',
+            onclick: () => {
+              S.size = Math.max(14, S.size - 1);
+              save();
+            },
+          }),
+          el('button', {
+            class: 'quiet hit',
+            text: 'A+',
+            'aria-label': 'Larger',
+            onclick: () => {
+              S.size = Math.min(72, S.size + 1);
+              save();
+            },
+          }),
+          el('button', {
+            class: 'quiet hit',
+            text: '⛶',
+            'aria-label': 'Full screen',
+            onclick: () => {
+              if (document.fullscreenElement) document.exitFullscreen();
+              else document.documentElement.requestFullscreen?.();
+            },
+          }),
+        ]);
+      }
+
+      // ------------------------------------------------------- auto-scroll
+      let playBtn = null;
+      const cleanup = [];
+      function toggleScroll() {
+        scroller ? stopScroll() : startScroll();
+      }
+      function startScroll() {
+        if (scroller) return;
+        let last = null;
+        let target = window.scrollY;
+        const step = (t) => {
+          const dt = last === null ? 0 : Math.min(t - last, 250);
+          last = t;
+          if (Math.abs(window.scrollY - target) > 8) target = window.scrollY;
+          target += (S.speed * dt) / 1000;
+          window.scrollTo({ top: target, behavior: 'instant' });
+          const doc = document.scrollingElement;
+          if (Math.ceil(doc.scrollTop + window.innerHeight) >= doc.scrollHeight - 1)
+            return stopScroll();
+          scroller = requestAnimationFrame(step);
+        };
+        scroller = requestAnimationFrame(step);
+        if (playBtn) {
+          playBtn.textContent = '❚❚';
+          playBtn.setAttribute('aria-label', 'Pause auto-scroll');
+        }
+        requestWakeLock();
+      }
+      function stopScroll() {
+        if (scroller) cancelAnimationFrame(scroller);
+        scroller = null;
+        if (playBtn) {
+          playBtn.textContent = '▶';
+          playBtn.setAttribute('aria-label', 'Start auto-scroll');
+        }
+      }
+      async function requestWakeLock() {
+        if (!S.keepAwake || wakeLock || !navigator.wakeLock) return;
+        try {
+          wakeLock = await navigator.wakeLock.request('screen');
+          wakeLock.addEventListener('release', () => (wakeLock = null));
+        } catch {}
+      }
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) stopScroll();
+        else if (S.keepAwake && route.tab === 'read') requestWakeLock();
+      });
+
+      // tap the text to pause or resume; keyboard for desktop
+      document.addEventListener('click', (e) => {
+        if (route.tab !== 'read') return;
+        if (e.target.closest('button, a, input, select')) return;
+        if (window.getSelection()?.toString()) return;
+        toggleScroll();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
+        if (route.tab !== 'read') return;
+        if (e.key === ' ') {
+          e.preventDefault();
+          toggleScroll();
+        } else if (e.key === '+' || e.key === '=' || e.key === 'ArrowRight') {
+          S.speed = Math.min(400, S.speed + 5);
+          save();
+          render();
+        } else if (e.key === '-' || e.key === 'ArrowLeft') {
+          S.speed = Math.max(5, S.speed - 5);
+          save();
+          render();
+        } else if (e.key === 'Escape') {
+          stopScroll();
+          go({ tab: 'home' });
+        } else if (e.key.toLowerCase() === 'l') {
+          S.larivaar = !S.larivaar;
+          save();
+        }
+      });
+
+      // ---------------------------------------------------------------- init
+      for (const b of document.querySelectorAll('nav.tabs button'))
+        b.addEventListener('click', () => go({ tab: b.dataset.tab }));
+      backEl.addEventListener('click', () => go({ tab: 'home' }));
+      applyTheme();
+      render();
+    </script>
+  </body>
+</html>

@@ -39,6 +39,14 @@ Corpus → Granth → Bani → Section (recursive: Pauri / Ashtpadi / Chaupai / 
    precomposed vs decomposed, ZWNJ/ZWJ, NBSP, dandas, word-boundary and line-break changes)
    through ingest → PostgreSQL → HTTP JSON and assert byte identity and SHA-256 equality.
 
+## Source annotation layers
+
+Some sources embed editorial annotations inside their text (Shabad OS's pause marks). An adapter
+may separate such a layer from the words, but only deterministically, versioned by the parser,
+with the composite string recorded verbatim in the line locator and the raw artefact kept as the
+snapshot, so the original is always recoverable. The separated layer is data (positions and
+kinds), never discarded. See ADR-0006.
+
 ## Provisional adoption
 
 Given rigorous upstream sources, the realistic first step for a Bani is to **adopt** one source

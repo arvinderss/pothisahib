@@ -50,11 +50,29 @@ Formats:
   this so a single strict parser handles structure. Schema in
   `packages/kosh-core/src/formats/kosh-source-v1.ts`.
 
+- `shabados-sqlite-v1`: the `dist/master.sqlite` file of npm `@shabados/database` 5.x, opened
+  read-only with Node's built-in `node:sqlite`. Options: `scope: "banis"` (one document per Bani
+  compilation; default) and `banis: ["JAPJ", ...]` to select compilations. Reads primary Gurmukhi
+  text only; separates Shabad OS's pause marks into a recorded layer (ADR-0006). Example:
+
+  ```bash
+  pnpm kosh snapshot ingest --source shabados --file ./master.sqlite --version 5.0.0-next.0 --as <editor>
+  pnpm kosh snapshot parse --id <snapshotId> --format shabados-sqlite-v1 --scope banis --banis JAPJ --as <editor>
+  pnpm kosh bani adopt-document --bani japji-sahib --granth sggs --name "ਜਪੁ ਜੀ ਸਾਹਿਬ · Jap Ji Sahib" --document <documentId> --rationale "..." --as <editor>
+  ```
+
 For every line the parser interns the exact text (`text_blobs`), records a `SOURCE_SPACING` token
 layout, writes `encoding-v1` and `compare-v1` normalisations into `source_normalizations`, and
 derived search keys into `blob_search_keys`. The document records `parser_version`,
-`input_format`, `parsed_at`, `line_count`. Re-parsing a snapshot is refused (immutable); a new
-parser version means a new snapshot row or a future explicit re-parse workflow.
+`input_format`, `parsed_at`, `line_count` and `metadata` (parser-recorded facts, including
+integrity findings in the source such as a compilation entry that points at a line the source does
+not contain). A snapshot is parsed **once per parser version**: a newer parser may parse it again
+and its documents sit beside the earlier ones, which stay immutable (migration 0009).
+
+Performance: the line path costs about 9 ms per line on PGlite (one transaction per document).
+Adapters must read their artefact efficiently; the Shabad OS file has no index on
+`asset_lines.line_id`, so the adapter builds one in-memory map instead of per-line lookups
+(9.5 ms/line instead of 1.1 s/line). Expect roughly 25 minutes for the full 141k-line corpus.
 
 ## 4. Structure and adoption (see corpus-model.md)
 

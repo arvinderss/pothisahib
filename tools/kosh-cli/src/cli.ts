@@ -11,6 +11,8 @@
  *   kosh snapshot list [--source s]
  *   kosh corpus ensure --corpus slug:Name --granth slug:Name --bani slug:Name --as USER
  *   kosh bani bootstrap --bani slug --document N --as USER
+ *   kosh bani adopt-document --bani slug --granth g --name "Name" --document N --rationale "..." --as USER
+ *   kosh snapshot parse --id N --format shabados-sqlite-v1 [--scope banis] [--banis JAPJ,JAAP] --as USER
  *   kosh version adopt --bani slug --document N --rationale "..." --as USER
  *   kosh version approve --id N --as USER | kosh version publish --id N --as USER | kosh version list --bani slug
  *   kosh user create --username u            (password read from KOSH_PASSWORD or prompted)
@@ -102,6 +104,9 @@ const OPTIONS = {
   code: { type: 'string' },
   as: { type: 'string' },
   json: { type: 'boolean' },
+  scope: { type: 'string' },
+  banis: { type: 'string' },
+  attribution: { type: 'string' },
 } as const;
 
 function need(v: string | undefined, flag: string): string {
@@ -181,6 +186,7 @@ async function main(): Promise<void> {
             license: values.license ?? null,
             licenseUrl: values['license-url'] ?? null,
             publisher: values.publisher ?? null,
+            attributionText: values.attribution ?? null,
             notes: values.notes ?? null,
             ...(values.redistribution
               ? { redistribution: values.redistribution as Redistribution }
@@ -202,6 +208,7 @@ async function main(): Promise<void> {
             ...(values.license ? { license: values.license } : {}),
             ...(values['license-url'] ? { licenseUrl: values['license-url'] } : {}),
             ...(values.publisher ? { publisher: values.publisher } : {}),
+            ...(values.attribution ? { attributionText: values.attribution } : {}),
             ...(values.notes ? { notes: values.notes } : {}),
             ...(values.redistribution
               ? { redistribution: values.redistribution as Redistribution }
@@ -239,10 +246,17 @@ async function main(): Promise<void> {
       }
       case 'snapshot parse': {
         const a = await actor('EDITOR');
+        const options: Record<string, unknown> = {};
+        if (values.scope) options['scope'] = values.scope;
+        if (values.banis)
+          options['banis'] = values.banis
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean);
         return out(
           await parseSnapshot(
             ingestCtx,
-            { snapshotId: need(values.id, 'id'), format: need(values.format, 'format') },
+            { snapshotId: need(values.id, 'id'), format: need(values.format, 'format'), options },
             a,
           ),
           values.json,
@@ -262,6 +276,36 @@ async function main(): Promise<void> {
         await ensureCorpus(appDb, cs, cn);
         await ensureGranth(appDb, cs, gs, gn);
         return out(await ensureBani(appDb, { granthSlug: gs, slug: bs, name: bn }, a), values.json);
+      }
+      case 'bani adopt-document': {
+        // ensure the Bani record, bootstrap its structure from the document, and open an adoption DRAFT
+        const a = await actor('EDITOR');
+        const slug = need(values.bani, 'bani');
+        const documentId = need(values.document, 'document');
+        const bani = await ensureBani(
+          appDb,
+          { granthSlug: need(values.granth, 'granth'), slug, name: need(values.name, 'name') },
+          a,
+        );
+        const structure = await bootstrapStructureFromDocument(
+          appDb,
+          { baniSlug: slug, documentId },
+          a,
+        );
+        const draft = await createAdoptionDraft(
+          appDb,
+          { baniSlug: slug, documentId, rationale: need(values.rationale, 'rationale') },
+          a,
+        );
+        return out(
+          {
+            bani: bani.slug,
+            sections: structure.sections,
+            lines: structure.lines,
+            draft: { id: draft.id, versionNo: draft.versionNo, status: draft.status },
+          },
+          values.json,
+        );
       }
       case 'bani bootstrap': {
         const a = await actor('EDITOR');

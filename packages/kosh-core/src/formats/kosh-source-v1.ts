@@ -5,6 +5,7 @@ import {
   type ParsedLine,
   type ParsedSection,
   type Parser,
+  type ParserInput,
 } from './types.ts';
 
 /**
@@ -74,10 +75,10 @@ function parseSection(v: unknown, where: string, depth: number): ParsedSection {
 export const koshSourceV1Parser: Parser = {
   format: 'kosh-source-v1',
   version: 'kosh-parse-kosh-source/1.0.0',
-  parse(bytes: Uint8Array): ParsedDocument[] {
+  async parse(input: ParserInput): Promise<ParsedDocument[]> {
     let root: unknown;
     try {
-      root = JSON.parse(decodeUtf8Strict(bytes));
+      root = JSON.parse(decodeUtf8Strict(await input.bytes()));
     } catch {
       throw new BadRequestError('artefact is not valid UTF-8 JSON');
     }

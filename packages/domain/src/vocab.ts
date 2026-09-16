@@ -47,7 +47,7 @@ export const SOURCE_STATUSES = ['PROPOSED', 'ACTIVE', 'SUSPENDED', 'RETIRED'] as
 export type SourceStatus = (typeof SOURCE_STATUSES)[number];
 
 /** Input formats the ingestion parser understands in Milestone 1. */
-export const SNAPSHOT_FORMATS = ['txt', 'kosh-source-v1'] as const;
+export const SNAPSHOT_FORMATS = ['txt', 'kosh-source-v1', 'shabados-sqlite-v1'] as const;
 export type SnapshotFormat = (typeof SNAPSHOT_FORMATS)[number];
 
 export function oneOf<T extends readonly string[]>(values: T, v: unknown): v is T[number] {

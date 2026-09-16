@@ -15,6 +15,11 @@ export interface ObjectStore {
   /** Read bytes for a key; verifies the hash embedded in the key. */
   get(key: string): Promise<Uint8Array>;
   exists(key: string): Promise<boolean>;
+  /**
+   * For stores backed by a local filesystem: a path a parser may open directly (read-only) instead
+   * of loading a large artefact into memory. Absent for remote stores.
+   */
+  localPath?(key: string): Promise<string | null>;
 }
 
 const KEY_RE = /^[a-z0-9-]+\/[0-9a-f]{64}$/;
@@ -59,6 +64,15 @@ export class FsObjectStore implements ObjectStore {
       return true;
     } catch {
       return false;
+    }
+  }
+  async localPath(key: string): Promise<string | null> {
+    const p = this.pathFor(key);
+    try {
+      await access(p);
+      return p;
+    } catch {
+      return null;
     }
   }
 }

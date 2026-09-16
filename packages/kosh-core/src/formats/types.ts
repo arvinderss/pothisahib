@@ -1,7 +1,8 @@
 /**
  * The parser output model. A source artefact yields documents; a document is a tree of sections
  * whose leaves carry lines EXACTLY as the source segmented them. Parsers never trim, join, split
- * or otherwise alter line text.
+ * or otherwise alter line text. (The one documented exception is the separation of a source's own
+ * annotation layer from its text, recorded verbatim in the line locator; see ADR-0006.)
  */
 export interface ParsedLine {
   text: string;
@@ -24,10 +25,20 @@ export interface ParsedDocument {
   sections: ParsedSection[];
 }
 
+/** How a parser reaches the artefact: lazily as bytes, or (for large local files) by path. */
+export interface ParserInput {
+  bytes(): Promise<Uint8Array>;
+  localPath: string | null;
+}
+
 export interface Parser {
   readonly format: string;
   readonly version: string;
-  parse(bytes: Uint8Array): ParsedDocument[];
+  parse(input: ParserInput, options?: Record<string, unknown>): Promise<ParsedDocument[]>;
+}
+
+export function inputFromBytes(bytes: Uint8Array): ParserInput {
+  return { bytes: async () => bytes, localPath: null };
 }
 
 /** Flattened line with the path of section (type,label) pairs from the document root. */

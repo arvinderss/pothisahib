@@ -1,4 +1,4 @@
-import { decodeUtf8Strict, type ParsedDocument, type Parser } from './types.ts';
+import { decodeUtf8Strict, type ParsedDocument, type Parser, type ParserInput } from './types.ts';
 
 /**
  * Plain UTF-8 text: one source line per physical line. CRLF and LF both terminate a line; the
@@ -9,8 +9,8 @@ import { decodeUtf8Strict, type ParsedDocument, type Parser } from './types.ts';
 export const txtParser: Parser = {
   format: 'txt',
   version: 'kosh-parse-txt/1.0.0',
-  parse(bytes: Uint8Array): ParsedDocument[] {
-    const text = decodeUtf8Strict(bytes);
+  async parse(input: ParserInput): Promise<ParsedDocument[]> {
+    const text = decodeUtf8Strict(await input.bytes());
     const crlf = text.includes('\r\n');
     const parts = text.split(/\r\n|\n/);
     if (parts.length > 0 && parts[parts.length - 1] === '') parts.pop();

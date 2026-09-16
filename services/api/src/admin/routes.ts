@@ -350,7 +350,10 @@ export async function registerAdminRoutes(app: FastifyInstance, opts: Opts): Pro
       return r;
     },
   );
-  app.post<{ Params: { id: string }; Body: { format: string } }>(
+  app.post<{
+    Params: { id: string };
+    Body: { format: string; options?: { scope?: string; banis?: string[] } };
+  }>(
     '/snapshots/:id/parse',
     {
       preHandler: requireAction('snapshot.parse'),
@@ -364,12 +367,30 @@ export async function registerAdminRoutes(app: FastifyInstance, opts: Opts): Pro
           type: 'object',
           required: ['format'],
           additionalProperties: false,
-          properties: { format: { type: 'string', enum: [...SNAPSHOT_FORMATS] } },
+          properties: {
+            format: { type: 'string', enum: [...SNAPSHOT_FORMATS] },
+            options: {
+              type: 'object',
+              additionalProperties: false,
+              properties: {
+                scope: { type: 'string', enum: ['banis'] },
+                banis: {
+                  type: 'array',
+                  maxItems: 100,
+                  items: { type: 'string', pattern: '^[A-Z0-9]{2,8}$' },
+                },
+              },
+            },
+          },
         },
       },
     },
     async (req) =>
-      parseSnapshot(ctx, { snapshotId: req.params.id, format: req.body.format }, actorOf(req)),
+      parseSnapshot(
+        ctx,
+        { snapshotId: req.params.id, format: req.body.format, options: req.body.options ?? {} },
+        actorOf(req),
+      ),
   );
   app.get<{ Params: { id: string } }>(
     '/snapshots/:id/documents',

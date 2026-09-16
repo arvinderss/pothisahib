@@ -46,6 +46,13 @@ Note: a PGlite directory can be opened by **one process at a time**. For running
 plus the CLI concurrently, use a real PostgreSQL (`docker run postgres:17-alpine` or a local
 install) and set `DATABASE_URL=postgres://…`.
 
+## Databases on a development machine
+
+`.data/` is git-ignored. Two PGlite databases are useful side by side: `.data/demo` (synthetic,
+clearly labelled test text; created by the CLI walk-through) and `.data/kosh` (real sources
+registered with their licences; the Shabad OS ingest lives here). Switch by editing
+`DATABASE_URL` in `.env`. Never seed Gurbani into a database used by tests.
+
 ## Tests
 
 ```bash

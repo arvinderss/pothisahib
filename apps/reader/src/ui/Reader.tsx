@@ -134,18 +134,19 @@ export function Reader({
       >
         {bundle.lines.map((line) => {
           const sec = sectionsById.get(line.sectionId);
-          const heading =
-            sec && sec.id !== lastSection && (sec.label || sec.type !== 'BODY') ? sec : null;
+          // Headings only when the Bani has more than one section; structural container types
+          // (BODY, BANI_SECTION) are shown as a neutral "Section n", named types by their name.
+          const heading = sec && sec.id !== lastSection && bundle.sections.length > 1 ? sec : null;
           lastSection = line.sectionId;
           const segs = segments(line.text, line.tokens, settings.mode);
+          const headingText = heading
+            ? ['BODY', 'BANI_SECTION'].includes(heading.type)
+              ? `Section ${heading.label ?? heading.ordinal + 1}`
+              : `${heading.type.toLowerCase()}${heading.label ? ` ${heading.label}` : ''}`
+            : null;
           return (
             <div key={line.lineId}>
-              {heading && (
-                <h2 className="section-heading">
-                  {heading.type.toLowerCase()}
-                  {heading.label ? ` ${heading.label}` : ''}
-                </h2>
-              )}
+              {headingText && <h2 className="section-heading">{headingText}</h2>}
               <p
                 className={`line${line.text.trim() === '' ? ' blank' : ''}`}
                 id={`line-${line.lineId}`}

@@ -27,9 +27,11 @@ export interface SourceDocument {
   inputFormat: string | null;
   parsedAt: string | null;
   lineCount: number;
+  /** Parser-recorded facts about the document, including integrity findings in the source itself. */
+  metadata: Record<string, unknown>;
 }
 
-const DOC_COLS = `id, snapshot_id, locator, title, ordinal, parser_version, input_format, parsed_at, line_count`;
+const DOC_COLS = `id, snapshot_id, locator, title, ordinal, parser_version, input_format, parsed_at, line_count, metadata`;
 const rowToDoc = (r: Record<string, unknown>): SourceDocument => ({
   id: str(r['id']),
   snapshotId: str(r['snapshot_id']),
@@ -40,6 +42,9 @@ const rowToDoc = (r: Record<string, unknown>): SourceDocument => ({
   inputFormat: (r['input_format'] as string | null) ?? null,
   parsedAt: iso(r['parsed_at']),
   lineCount: Number(r['line_count']),
+  metadata: (typeof r['metadata'] === 'string'
+    ? JSON.parse(r['metadata'] as string)
+    : (r['metadata'] ?? {})) as Record<string, unknown>,
 });
 
 export interface ParseResult {
@@ -49,7 +54,7 @@ export interface ParseResult {
 
 export async function parseSnapshot(
   ctx: KoshContext,
-  input: { snapshotId: string; format: string },
+  input: { snapshotId: string; format: string; options?: Record<string, unknown> },
   actor: Actor,
 ): Promise<ParseResult> {
   const snap = await getSnapshot(ctx.db, input.snapshotId);
@@ -58,16 +63,21 @@ export async function parseSnapshot(
     throw new IntegrityError('snapshot content has been pruned; re-ingest the artefact');
   const parser = parserFor(input.format);
 
+  // The stored artefact is verified against the recorded hash before any parser sees it.
   const bytes = await ctx.store.get(snap.storageKey);
   if (sha256Hex(bytes) !== snap.sha256Hex)
     throw new IntegrityError('stored artefact does not match the recorded hash');
-  const docs = parser.parse(bytes);
+  const localPath = ctx.store.localPath ? await ctx.store.localPath(snap.storageKey) : null;
+  const docs = await parser.parse({ bytes: async () => bytes, localPath }, input.options ?? {});
 
+  // A snapshot is parsed once per parser version. A newer parser may parse it again; the earlier
+  // documents remain (immutable) and the new ones sit beside them (migration 0009).
   const already = await ctx.db.query<{ n: number }>(
-    'SELECT count(*)::int AS n FROM source_documents WHERE snapshot_id = $1',
-    [snap.id],
+    'SELECT count(*)::int AS n FROM source_documents WHERE snapshot_id = $1 AND parser_version = $2',
+    [snap.id, parser.version],
   );
-  if (Number(already.rows[0]?.n) > 0) throw new ConflictError('snapshot has already been parsed');
+  if (Number(already.rows[0]?.n) > 0)
+    throw new ConflictError(`snapshot has already been parsed with ${parser.version}`);
 
   const out: SourceDocument[] = [];
   let total = 0;
@@ -77,8 +87,8 @@ export async function parseSnapshot(
       let dr;
       try {
         dr = await tx.query<Record<string, unknown>>(
-          `INSERT INTO source_documents (snapshot_id, locator, title, ordinal, parser_version, input_format, line_count)
-           VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING ${DOC_COLS}`,
+          `INSERT INTO source_documents (snapshot_id, locator, title, ordinal, parser_version, input_format, line_count, metadata)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb) RETURNING ${DOC_COLS}`,
           [
             snap.id,
             doc.locator,
@@ -87,6 +97,7 @@ export async function parseSnapshot(
             parser.version,
             parser.format,
             lines.length,
+            JSON.stringify(doc.metadata ?? {}),
           ],
         );
       } catch (e) {
@@ -129,6 +140,8 @@ export async function parseSnapshot(
           locator: doc.locator,
           lineCount: lines.length,
           parserVersion: parser.version,
+          inputFormat: parser.format,
+          options: input.options ?? {},
         },
       });
       return document;

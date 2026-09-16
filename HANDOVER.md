@@ -110,9 +110,18 @@ Done and verified (`pnpm verify` green; 152 new/updated tests across api and rea
 - **`apps/reader`** vertical slice: library grouped by Granth with verification badges, download → Web Crypto verification → IndexedDB, re-verification on read, offline reading, Pad Ched / true Larivaar, 5 themes + typography, provisional-source tag with attribution, reading position, device-local settings, Workbox app-shell precache (API never SW-cached), strict meta CSP. Builds to ~110 kB gzipped.
 - `.env` loader (no dependency) for services and CLI; relative data paths resolve to the repository root. `.claude/launch.json` in the parent folder starts `api-public`, `api-admin`, `reader` for the browser pane.
 
+**First real source (2026-09-16, after Dharam's "ok" to the Shabad OS recommendation):**
+
+- Adapter `shabados-sqlite-v1` (`packages/kosh-core/src/formats/shabados-sqlite-v1.ts`, ADR-0006): reads `@shabados/database` 5.x `dist/master.sqlite` with Node's `node:sqlite`, primary Gurmukhi text only, one document per Bani compilation, sections by `section_order`, Shabad OS pause marks (`;` `,` `.`) separated into a recorded layer (`locator.raw` + `locator.vishraam`). Tests build a synthetic SQLite fixture. CLI: `snapshot parse --format shabados-sqlite-v1 --scope banis [--banis …]`, `bani adopt-document …`, `source add --attribution …`. Admin API parse route accepts `options`.
+- Local database `.data/kosh` (dev accounts `kosh-admin`, `kosh-editor`, both MFA): source `shabados` registered ACTIVE / ATTRIBUTION_REQUIRED with the licence statements quoted in `docs/source-candidates.md`; snapshot 1 = `master.sqlite` of 5.0.0-next.0, SHA-256 `517890c7…742d` (151,965,696 bytes). BaniDB was not registered.
+
+- **Jap Ji Sahib adopted and published** locally: Bani `japji-sahib` under granth `sggs`, 385 lines, version 1 PROVISIONAL, decision by `kosh-admin` + `kosh-editor` (two dev accounts operated by the agent; in production the two approvals are two people).
+- **Defect found in the source and handled honestly:** five `bani_lines` rows in 5.0.0-next.0 reference line ids that do not exist (Akal Ustat, Barah Maha, Asa Ki Var ×2, Sukhmani Sahib). Adapter 1.0.0 dropped them silently (inner join); 1.1.0 records them in `source_documents.metadata.integrity.dangling_bani_lines` and the parse result. Migration 0009 added the metadata column and allows re-parsing a snapshot with a newer parser (earlier documents kept). The snapshot was re-parsed with 1.1.0; the four affected documents now state exactly what is missing. Consider reporting the defect upstream to Shabad OS.
+- **Performance defect found and fixed:** the first parse took 2 h 43 min (1.1 s/line) because the Shabad OS file has no index on `asset_lines.line_id`; the adapter now builds one in-memory map (9.5 ms/line). `packages/kosh-core/bench/` holds the two benchmarks used.
+
 Remaining for Milestone 2:
 
-1. **First real source** (blocked on Dharam: confirm Shabad OS as the first source and the registry values proposed in `docs/source-candidates.md`; confirm BaniDB is not registered or is PROHIBITED/comparison-only). Then: adapter `@shabados/database` SQLite → `kosh-source/1` (one document per Bani, sections from their structure), ingest, parse, bootstrap Nitnem Banis, adopt through the two-person path.
+1. Verify Japji in the reader against the local API; adopt the remaining Nitnem Banis (Jaap Sahib, Tav Prasad Savaiye, Chaupai, Anand Sahib, Rehras, Sohila) from the 1.1.0 documents; whole-source scope (all of SGGS) for the adapter; re-sync detection keyed on Shabad OS line ids (R-01).
 2. Reader: bookmarks/favourites, Pothi Sahib builder (personal ordered lists), search UI over `/api/v1/search`, auto-scroll + wake-lock, keyboard navigation, install prompt, bundle update flow (ETag), font selection after the font licence audit (`docs/fonts.md`), Playwright e2e at phone/tablet/desktop/TV widths.
 3. CI first run after push; Docker verification.
 

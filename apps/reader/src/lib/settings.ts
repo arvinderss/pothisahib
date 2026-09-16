@@ -12,6 +12,8 @@ export interface Settings {
   maxWidth: number;
   mode: 'padched' | 'larivaar';
   showProvenance: boolean;
+  /** auto-scroll speed in pixels per second, remembered per device (SRS §18) */
+  autoScrollSpeed: number;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -22,6 +24,7 @@ export const DEFAULT_SETTINGS: Settings = {
   maxWidth: 46,
   mode: 'padched',
   showProvenance: true,
+  autoScrollSpeed: 40,
 };
 
 const clamp = (v: unknown, lo: number, hi: number, dflt: number): number =>
@@ -41,5 +44,6 @@ export function normalizeSettings(v: unknown): Settings {
     maxWidth: clamp(s['maxWidth'], 24, 120, DEFAULT_SETTINGS.maxWidth),
     mode: s['mode'] === 'larivaar' ? 'larivaar' : 'padched',
     showProvenance: s['showProvenance'] !== false,
+    autoScrollSpeed: clamp(s['autoScrollSpeed'], 5, 400, DEFAULT_SETTINGS.autoScrollSpeed),
   };
 }

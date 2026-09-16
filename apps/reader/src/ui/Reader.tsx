@@ -1,8 +1,27 @@
-import { useEffect, useRef, useState, type JSX } from 'react';
+import { useCallback, useEffect, useRef, useState, type JSX } from 'react';
 import type { Bundle } from '@pothisahib/domain';
+import {
+  adjustSpeed,
+  clampSpeed,
+  createAutoScroller,
+  pageScroller,
+  type AutoScroller,
+} from '../lib/autoscroll.ts';
 import { segments } from '../lib/render.ts';
 import type { Settings } from '../lib/settings.ts';
-import { loadBundle, loadPosition, savePosition } from '../lib/store.ts';
+import { loadBundle, loadPosition, savePosition, saveSettings } from '../lib/store.ts';
+import { AutoScrollBar } from './AutoScrollBar.tsx';
+
+const wakeLockApi = (): {
+  request(type: 'screen'): Promise<{ release(): Promise<void> }>;
+} | null =>
+  typeof navigator !== 'undefined' && 'wakeLock' in navigator
+    ? (
+        navigator as unknown as {
+          wakeLock: { request(type: 'screen'): Promise<{ release(): Promise<void> }> };
+        }
+      ).wakeLock
+    : null;
 
 function Provenance({ bundle }: { bundle: Bundle }): JSX.Element | null {
   const s = bundle.source;
@@ -37,6 +56,65 @@ export function Reader({
   const [bundle, setBundle] = useState<Bundle | null | 'missing' | 'corrupt'>(null);
   const [current, setCurrent] = useState<string | null>(null);
   const restored = useRef(false);
+
+  // ---- auto-scroll (SRS §18): continuous, adjustable, pause/resume, tap and keyboard, wake-lock
+  const [running, setRunning] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+  const speedRef = useRef(settings.autoScrollSpeed);
+  speedRef.current = settings.autoScrollSpeed;
+  const scrollerRef = useRef<AutoScroller | null>(null);
+  if (scrollerRef.current === null && typeof window !== 'undefined') {
+    scrollerRef.current = createAutoScroller({
+      scroller: pageScroller(),
+      getSpeed: () => speedRef.current,
+      onState: (r) => setRunning(r),
+      wakeLock: wakeLockApi(),
+    });
+  }
+  const setSpeed = useCallback((v: number) => {
+    const s = clampSpeed(v);
+    speedRef.current = s; // take effect on the next frame; repeated key presses compound
+    void saveSettings({ autoScrollSpeed: s });
+  }, []);
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenEnabled) return;
+    if (document.fullscreenElement) void document.exitFullscreen();
+    else void document.documentElement.requestFullscreen();
+  }, []);
+  useEffect(() => {
+    const onFs = (): void => setFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener('fullscreenchange', onFs);
+    // pause when the tab is hidden (nothing is visible to read; also releases the wake-lock)
+    const onVis = (): void => {
+      if (document.hidden) scrollerRef.current?.stop('hidden');
+    };
+    document.addEventListener('visibilitychange', onVis);
+    const onKey = (e: KeyboardEvent): void => {
+      const t = e.target as HTMLElement | null;
+      if (t && ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'].includes(t.tagName)) return;
+      if (e.key === ' ') {
+        e.preventDefault();
+        scrollerRef.current?.toggle();
+      } else if (e.key === '+' || e.key === '=' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        setSpeed(adjustSpeed(speedRef.current, 1));
+      } else if (e.key === '-' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        setSpeed(adjustSpeed(speedRef.current, -1));
+      } else if (e.key === 'Escape') {
+        scrollerRef.current?.stop('user');
+      } else if (e.key === 'f' || e.key === 'F') {
+        toggleFullscreen();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('fullscreenchange', onFs);
+      document.removeEventListener('visibilitychange', onVis);
+      window.removeEventListener('keydown', onKey);
+      scrollerRef.current?.destroy();
+    };
+  }, [setSpeed, toggleFullscreen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -125,6 +203,12 @@ export function Reader({
       <article
         className={`text mode-${settings.mode}`}
         lang="pa"
+        // tap anywhere on the text to pause or resume (SRS §18); buttons keep their own behaviour
+        onClick={(e) => {
+          if (window.getSelection()?.toString()) return; // a text selection is not a tap
+          if ((e.target as HTMLElement).closest('button, a')) return;
+          scrollerRef.current?.toggle();
+        }}
         style={{
           fontSize: `${settings.fontScale}rem`,
           lineHeight: settings.lineHeight,
@@ -168,6 +252,15 @@ export function Reader({
           );
         })}
       </article>
+      <AutoScrollBar
+        running={running}
+        speed={settings.autoScrollSpeed}
+        onToggle={() => scrollerRef.current?.toggle()}
+        onSpeed={setSpeed}
+        onFullscreen={toggleFullscreen}
+        fullscreen={fullscreen}
+        wakeLockSupported={wakeLockApi() !== null}
+      />
     </main>
   );
 }

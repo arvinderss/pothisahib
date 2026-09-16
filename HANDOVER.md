@@ -122,7 +122,7 @@ Done and verified (`pnpm verify` green; 152 new/updated tests across api and rea
 Remaining for Milestone 2:
 
 1. Verify Japji in the reader against the local API; adopt the remaining Nitnem Banis (Jaap Sahib, Tav Prasad Savaiye, Chaupai, Anand Sahib, Rehras, Sohila) from the 1.1.0 documents; whole-source scope (all of SGGS) for the adapter; re-sync detection keyed on Shabad OS line ids (R-01).
-2. Reader: bookmarks/favourites, Pothi Sahib builder (personal ordered lists), search UI over `/api/v1/search`, auto-scroll + wake-lock, keyboard navigation, install prompt, bundle update flow (ETag), font selection after the font licence audit (`docs/fonts.md`), Playwright e2e at phone/tablet/desktop/TV widths.
+2. Reader: bookmarks/favourites, Pothi Sahib builder (personal ordered lists), search UI over `/api/v1/search`, line-by-line keyboard navigation, install prompt, bundle update flow (ETag), font selection after the font licence audit (`docs/fonts.md`), Playwright e2e at phone/tablet/desktop/TV widths. Auto-scroll with speed controls, tap/keyboard pause, wake-lock and full screen was added on 2026-09-16 (`apps/reader/src/lib/autoscroll.ts`; note the absolute-target design that avoids device-pixel snapping speeding up scrolling by the pixel ratio).
 3. CI first run after push; Docker verification.
 
 Then Milestone 3 (Shudh Roop reporting with anonymous identities and the correction issue model) per `docs/correction-workflow.md`.

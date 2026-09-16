@@ -112,6 +112,21 @@ export function SettingsPanel({
         />{' '}
         Show provenance / verification status
       </label>
+      <label>
+        Auto-scroll speed <output>{settings.autoScrollSpeed} px/s</output>
+        <input
+          type="range"
+          min={5}
+          max={400}
+          step={5}
+          value={settings.autoScrollSpeed}
+          onChange={(e) => set({ autoScrollSpeed: Number(e.target.value) })}
+        />
+      </label>
+      <p className="muted small">
+        In the reader: Space starts or pauses auto-scroll, + and − change speed, F toggles full
+        screen, Esc stops. Tapping the text pauses or resumes.
+      </p>
     </aside>
   );
 }

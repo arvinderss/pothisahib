@@ -233,6 +233,42 @@ button:disabled {
   display: inline;
 }
 
+.autoscroll {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem max(1rem, env(safe-area-inset-right)) max(0.5rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  z-index: 2;
+}
+.autoscroll .speed {
+  flex: 1;
+  min-width: 4rem;
+}
+.autoscroll .speed input {
+  width: 100%;
+}
+.autoscroll button.primary {
+  border-color: var(--accent);
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.text {
+  padding-bottom: 60vh; /* room to keep the last lines readable above the auto-scroll bar */
+}
+
 .settings {
   position: fixed;
   inset: 0 0 0 auto;

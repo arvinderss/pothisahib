@@ -44,15 +44,26 @@ function Provenance({ bundle }: { bundle: Bundle }): JSX.Element | null {
   );
 }
 
+/**
+ * Reads one Bani, or a Pothi: an ordered set of Banis shown as one continuous text. `slugs` is the
+ * reading order and `positionKey` is what the reading position is remembered against, so a Pothi
+ * keeps its own place independently of the same Bani read on its own.
+ */
 export function Reader({
-  slug,
+  slugs,
+  title,
+  positionKey,
   settings,
   onBack,
 }: {
-  slug: string;
+  slugs: string[];
+  title: string;
+  positionKey: string;
   settings: Settings;
   onBack: () => void;
 }): JSX.Element {
+  const slug = slugs[0] as string;
+  const [bundles, setBundles] = useState<Bundle[] | null>(null);
   const [bundle, setBundle] = useState<Bundle | null | 'missing' | 'corrupt'>(null);
   const [current, setCurrent] = useState<string | null>(null);
   const restored = useRef(false);
@@ -119,26 +130,28 @@ export function Reader({
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const b = await loadBundle(slug);
+      // Each Bani is re-verified as it is loaded; one that is missing or fails its check is left
+      // out of the reading rather than shown, and a Pothi still reads the rest.
+      const loaded: Bundle[] = [];
+      for (const s of slugs) {
+        const b = await loadBundle(s);
+        if (b) loaded.push(b);
+      }
       if (cancelled) return;
-      if (!b) {
-        setBundle(
-          (await import('../lib/db.ts')).db.bundles
-            .get(slug)
-            .then((x) => (x ? 'corrupt' : 'missing')) as never,
-        );
-        const x = await (await import('../lib/db.ts')).db.bundles.get(slug);
-        setBundle(x ? 'corrupt' : 'missing');
+      if (loaded.length === 0) {
+        const stored = await (await import('../lib/db.ts')).db.bundles.get(slug);
+        setBundle(stored ? 'corrupt' : 'missing');
         return;
       }
-      setBundle(b);
-      const pos = await loadPosition(slug);
+      setBundles(loaded);
+      setBundle(loaded[0] as Bundle);
+      const pos = await loadPosition(positionKey);
       if (pos) setCurrent(pos);
     })();
     return () => {
       cancelled = true;
     };
-  }, [slug]);
+  }, [slugs, slug, positionKey]);
 
   useEffect(() => {
     if (!current || restored.current || typeof bundle !== 'object' || bundle === null) return;
@@ -159,13 +172,14 @@ export function Reader({
         const top = entries
           .filter((e) => e.isIntersecting)
           .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-        if (top) void savePosition(slug, (top.target as HTMLElement).dataset['lineId'] ?? '');
+        if (top)
+          void savePosition(positionKey, (top.target as HTMLElement).dataset['lineId'] ?? '');
       },
       { rootMargin: '-20% 0px -60% 0px' },
     );
     document.querySelectorAll('.line').forEach((el) => obs.observe(el));
     return () => obs.disconnect();
-  }, [bundle, slug, settings.mode]);
+  }, [bundle, bundles, positionKey, settings.mode]);
 
   if (bundle === null) return <p className="notice">Opening…</p>;
   if (bundle === 'missing')
@@ -188,8 +202,8 @@ export function Reader({
       </p>
     );
 
-  const sectionsById = new Map(bundle.sections.map((s) => [s.id, s]));
-  let lastSection: string | null = null;
+  const list = bundles ?? [bundle];
+  const multi = list.length > 1;
 
   return (
     <main className="reader" aria-labelledby="bani-heading">
@@ -197,8 +211,14 @@ export function Reader({
         <button type="button" onClick={onBack} className="quiet">
           ← Library
         </button>
-        <h1 id="bani-heading">{bundle.bani.name}</h1>
-        {settings.showProvenance && <Provenance bundle={bundle} />}
+        <h1 id="bani-heading">{title}</h1>
+        {settings.showProvenance && !multi && <Provenance bundle={bundle} />}
+        {settings.showProvenance && multi && (
+          <p className="provenance" role="note">
+            {list.length} Banian in this Pothi. Each carries its own source and version, shown where
+            it begins.
+          </p>
+        )}
       </header>
       <article
         className={`text mode-${settings.mode}`}
@@ -216,39 +236,54 @@ export function Reader({
           maxWidth: `${settings.maxWidth}ch`,
         }}
       >
-        {bundle.lines.map((line) => {
-          const sec = sectionsById.get(line.sectionId);
-          // Headings only when the Bani has more than one section; structural container types
-          // (BODY, BANI_SECTION) are shown as a neutral "Section n", named types by their name.
-          const heading = sec && sec.id !== lastSection && bundle.sections.length > 1 ? sec : null;
-          lastSection = line.sectionId;
-          const segs = segments(line.text, line.tokens, settings.mode);
-          const headingText = heading
-            ? ['BODY', 'BANI_SECTION'].includes(heading.type)
-              ? `Section ${heading.label ?? heading.ordinal + 1}`
-              : `${heading.type.toLowerCase()}${heading.label ? ` ${heading.label}` : ''}`
-            : null;
+        {list.map((bk) => {
+          const sectionsById = new Map(bk.sections.map((s) => [s.id, s]));
+          let lastSection: string | null = null;
           return (
-            <div key={line.lineId}>
-              {headingText && <h2 className="section-heading">{headingText}</h2>}
-              <p
-                className={`line${line.text.trim() === '' ? ' blank' : ''}`}
-                id={`line-${line.lineId}`}
-                data-line-id={line.lineId}
-              >
-                {segs.map((s, i) =>
-                  s.kind === 'word' ? (
-                    <span key={i} className="word" data-ordinal={s.ordinal}>
-                      {s.text}
-                    </span>
-                  ) : (
-                    <span key={i} className="gap">
-                      {s.text}
-                    </span>
-                  ),
-                )}
-              </p>
-            </div>
+            <section key={bk.bani.slug} className="bani-part" aria-label={bk.bani.name}>
+              {multi && (
+                <>
+                  <h2 className="bani-heading">{bk.bani.name}</h2>
+                  {settings.showProvenance && <Provenance bundle={bk} />}
+                </>
+              )}
+              {bk.lines.map((line) => {
+                const sec = sectionsById.get(line.sectionId);
+                // Headings only when the Bani has more than one section; structural container types
+                // (BODY, BANI_SECTION) are shown as a neutral "Section n", named types by their name.
+                const heading =
+                  sec && sec.id !== lastSection && bk.sections.length > 1 ? sec : null;
+                lastSection = line.sectionId;
+                const segs = segments(line.text, line.tokens, settings.mode);
+                const headingText = heading
+                  ? ['BODY', 'BANI_SECTION'].includes(heading.type)
+                    ? `Section ${heading.label ?? heading.ordinal + 1}`
+                    : `${heading.type.toLowerCase()}${heading.label ? ` ${heading.label}` : ''}`
+                  : null;
+                return (
+                  <div key={line.lineId}>
+                    {headingText && <h3 className="section-heading">{headingText}</h3>}
+                    <p
+                      className={`line${line.text.trim() === '' ? ' blank' : ''}`}
+                      id={`line-${line.lineId}`}
+                      data-line-id={line.lineId}
+                    >
+                      {segs.map((s, i) =>
+                        s.kind === 'word' ? (
+                          <span key={i} className="word" data-ordinal={s.ordinal}>
+                            {s.text}
+                          </span>
+                        ) : (
+                          <span key={i} className="gap">
+                            {s.text}
+                          </span>
+                        ),
+                      )}
+                    </p>
+                  </div>
+                );
+              })}
+            </section>
           );
         })}
       </article>

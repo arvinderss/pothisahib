@@ -5,6 +5,7 @@
 import Dexie, { type Table } from 'dexie';
 import type { Bundle } from '@pothisahib/domain';
 import type { CatalogBani } from './api.ts';
+import type { Pothi } from './pothi.ts';
 import type { Settings } from './settings.ts';
 
 export interface StoredBundle {
@@ -33,9 +34,18 @@ class ReaderDb extends Dexie {
   catalog!: Table<StoredCatalog, string>;
   settings!: Table<StoredSettings, string>;
   positions!: Table<ReadingPosition, string>;
+  pothis!: Table<Pothi, string>;
   constructor() {
     super('pothi-sahib');
     this.version(1).stores({ bundles: 'slug', catalog: 'id', settings: 'id', positions: 'slug' });
+    // v2 adds personal Pothis; existing stores are unchanged, so no data migration is needed.
+    this.version(2).stores({
+      bundles: 'slug',
+      catalog: 'id',
+      settings: 'id',
+      positions: 'slug',
+      pothis: 'id, updatedAt',
+    });
   }
 }
 

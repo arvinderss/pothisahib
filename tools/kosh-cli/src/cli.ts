@@ -12,6 +12,7 @@
  *   kosh corpus ensure --corpus slug:Name --granth slug:Name --bani slug:Name --as USER
  *   kosh bani bootstrap --bani slug --document N --as USER
  *   kosh bani adopt-document --bani slug --granth g --name "Name" --document N --rationale "..." --as USER
+ *   kosh bani adopt-all --parser-version V --as EDITOR_A --second EDITOR_B
  *   kosh snapshot parse --id N --format shabados-sqlite-v1 [--scope banis] [--banis JAPJ,JAAP] --as USER
  *   kosh version adopt --bani slug --document N --rationale "..." --as USER
  *   kosh version approve --id N --as USER | kosh version publish --id N --as USER | kosh version list --bani slug
@@ -19,6 +20,7 @@
  *   kosh user mfa-enroll --username u | kosh user mfa-confirm --username u --code 123456
  *   kosh user bootstrap-super-admin --username u
  *   kosh user grant --username u --role R --as SUPER_ADMIN_USER | kosh user revoke ...
+ *   kosh export sqlite [--out .data/export/kosh.sqlite] [--sql .data/export/kosh.sql] [--include-secrets]
  *
  * `--as` names the acting account for authorisation and audit attribution. The CLI runs with the
  * operator's database credentials; it scopes itself to the kosh_ingest / kosh_app roles so that
@@ -50,6 +52,7 @@ import {
   ensureBani,
   ensureCorpus,
   ensureGranth,
+  exportDatabase,
   FsObjectStore,
   getBani,
   getUserByUsername,
@@ -107,6 +110,11 @@ const OPTIONS = {
   scope: { type: 'string' },
   banis: { type: 'string' },
   attribution: { type: 'string' },
+  second: { type: 'string' },
+  'parser-version': { type: 'string' },
+  out: { type: 'string' },
+  sql: { type: 'string' },
+  'include-secrets': { type: 'boolean' },
 } as const;
 
 function need(v: string | undefined, flag: string): string {
@@ -171,6 +179,20 @@ async function main(): Promise<void> {
           all: values.all ?? false,
         });
         return;
+
+      case 'export sqlite': {
+        // Read-only copy of the corpus for offline review in any SQLite client (HeidiSQL, DB
+        // Browser). Runs as the database owner: it must see every table, and it only reads.
+        const sqlitePath = resolve(invocationDir(), values.out ?? '.data/export/kosh.sqlite');
+        const sqlPath = values.sql ? resolve(invocationDir(), values.sql) : undefined;
+        const result = await exportDatabase(owner, {
+          sqlitePath,
+          ...(sqlPath ? { sqlPath } : {}),
+          includeSecrets: values['include-secrets'] ?? false,
+          log: (m) => console.error(m),
+        });
+        return out(result, values.json);
+      }
 
       case 'source list':
         return out(await listSources(appDb), values.json);
@@ -306,6 +328,84 @@ async function main(): Promise<void> {
           },
           values.json,
         );
+      }
+      case 'bani adopt-all': {
+        // Repeatable bulk adoption: every document parsed by one parser version becomes a Bani,
+        // adopted, approved by two distinct accounts and published as PROVISIONAL. Already-adopted
+        // Banis are skipped, so the command can be re-run after a new parse. The two approvals are
+        // still two separate accounts: --as and --second may not be the same person.
+        const a = await actor('EDITOR');
+        const secondName = need(values.second, 'second');
+        if (secondName === a.username) throw new Error('--second must be a different account');
+        const second = await getUserByUsername(appDb, secondName);
+        if (!second) throw new Error('--second user not found');
+        if (!roleAtLeast(effectiveRole(second.roles), 'EDITOR'))
+          throw new Error(`${second.username} is not an Editor`);
+        const b: Actor = { userId: second.id, username: second.username };
+        const parserVersion = need(values['parser-version'], 'parser-version');
+
+        const docs = await appDb.query<{
+          id: string;
+          locator: string;
+          name: string | null;
+          name_gurmukhi: string | null;
+          granths: string[] | null;
+        }>(
+          `SELECT id, locator,
+                  metadata->'names'->>'Latn' AS name,
+                  metadata->'names'->>'Guru' AS name_gurmukhi,
+                  ARRAY(SELECT jsonb_array_elements_text(metadata->'shabados_source_ids')) AS granths
+             FROM source_documents WHERE parser_version = $1 ORDER BY locator`,
+          [parserVersion],
+        );
+        if (docs.rows.length === 0) throw new Error(`no documents for parser ${parserVersion}`);
+
+        await ensureCorpus(appDb, 'gurbani-kosh', 'Gurbani Kosh');
+        const GRANTHS = {
+          sggs: ['sggs', 'ਸ੍ਰੀ ਗੁਰੂ ਗ੍ਰੰਥ ਸਾਹਿਬ ਜੀ · Sri Guru Granth Sahib Ji'],
+          dasam: ['dasam', 'ਸ੍ਰੀ ਦਸਮ ਗ੍ਰੰਥ ਸਾਹਿਬ · Sri Dasam Granth Sahib'],
+          compilations: ['panthic-compilations', 'ਪੰਥਕ ਸੰਗ੍ਰਹਿ · Panthic compilations'],
+        } as const satisfies Record<string, readonly [string, string]>;
+        for (const [slug, name] of Object.values(GRANTHS))
+          await ensureGranth(appDb, 'gurbani-kosh', slug, name);
+
+        const slugify = (s: string): string =>
+          s
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/(^-|-$)/g, '');
+        const done: unknown[] = [];
+        for (const d of docs.rows) {
+          const ids = d.granths ?? [];
+          // A composition drawn from more than one Granth is a compilation, not part of either.
+          const key = ids.length > 1 ? 'compilations' : ids[0] === 'SGGS' ? 'sggs' : 'dasam';
+          const granthSlug = GRANTHS[key][0];
+          const english = d.name ?? d.locator.replace('bani:', '');
+          const slug = slugify(english);
+          const existing = await getBani(appDb, slug);
+          if (existing) {
+            done.push({ slug, skipped: 'already adopted' });
+            continue;
+          }
+          const name = d.name_gurmukhi ? `${d.name_gurmukhi} · ${english}` : english;
+          await ensureBani(appDb, { granthSlug, slug, name }, a);
+          await bootstrapStructureFromDocument(appDb, { baniSlug: slug, documentId: d.id }, a);
+          const draft = await createAdoptionDraft(
+            appDb,
+            {
+              baniSlug: slug,
+              documentId: d.id,
+              rationale: `Bulk adoption from ${parserVersion}; PROVISIONAL pending cross-source review.`,
+            },
+            a,
+          );
+          await approveVersion(appDb, { versionId: draft.id, notes: 'Bulk adoption.' }, a);
+          await approveVersion(appDb, { versionId: draft.id, notes: 'Bulk adoption.' }, b);
+          const pub = await publishVersion(appDb, { versionId: draft.id }, a);
+          done.push({ slug, granth: granthSlug, versionNo: pub.versionNo, status: pub.status });
+          console.error(`${slug}: published v${pub.versionNo}`);
+        }
+        return out(done, values.json);
       }
       case 'bani bootstrap': {
         const a = await actor('EDITOR');

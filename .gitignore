@@ -12,3 +12,4 @@ Thumbs.db
 *.tsbuildinfo
 .vitest/
 deployment/data/
+.certs/

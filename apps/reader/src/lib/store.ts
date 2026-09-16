@@ -6,6 +6,14 @@ import type { Bundle } from '@pothisahib/domain';
 import { fetchBundle, fetchCatalog, type CatalogBani } from './api.ts';
 import { verifyBundle } from './bundle.ts';
 import { db, type StoredBundle } from './db.ts';
+import {
+  addSlug,
+  createPothi,
+  moveSlug,
+  normalizePothiName,
+  removeSlug,
+  type Pothi,
+} from './pothi.ts';
 import { DEFAULT_SETTINGS, normalizeSettings, type Settings } from './settings.ts';
 
 export interface State {
@@ -14,6 +22,7 @@ export interface State {
   downloaded: Record<string, { etag: string | null; versionNo: number; verifiedAt: string }>;
   settings: Settings;
   online: boolean;
+  pothis: Pothi[];
   busy: Record<string, string>; // slug -> status text
   error: string | null;
 }
@@ -23,6 +32,7 @@ let state: State = {
   catalogFetchedAt: null,
   downloaded: {},
   settings: DEFAULT_SETTINGS,
+  pothis: [],
   online: typeof navigator === 'undefined' ? true : navigator.onLine,
   busy: {},
   error: null,
@@ -45,10 +55,11 @@ export const store = {
 };
 
 export async function init(): Promise<void> {
-  const [cat, saved, bundles] = await Promise.all([
+  const [cat, saved, bundles, pothis] = await Promise.all([
     db.catalog.get('catalog'),
     db.settings.get('settings'),
     db.bundles.toArray(),
+    db.pothis.toArray(),
   ]);
   const downloaded: State['downloaded'] = {};
   for (const b of bundles)
@@ -58,6 +69,7 @@ export async function init(): Promise<void> {
     catalogFetchedAt: cat?.fetchedAt ?? null,
     settings: normalizeSettings(saved?.value),
     downloaded,
+    pothis: pothis.sort((a, b) => a.name.localeCompare(b.name)),
   });
   if (typeof window !== 'undefined') {
     window.addEventListener('online', () => set({ online: true }));
@@ -138,6 +150,46 @@ export async function savePosition(slug: string, lineId: string): Promise<void> 
 }
 export async function loadPosition(slug: string): Promise<string | null> {
   return (await db.positions.get(slug))?.lineId ?? null;
+}
+
+// ---- personal Pothis (device-local, never transmitted)
+
+const persist = async (p: Pothi): Promise<void> => {
+  await db.pothis.put(p);
+  const others = state.pothis.filter((x) => x.id !== p.id);
+  set({ pothis: [...others, p].sort((a, b) => a.name.localeCompare(b.name)) });
+};
+
+export async function addPothi(name: string): Promise<Pothi> {
+  const p = createPothi(name);
+  await persist(p);
+  return p;
+}
+
+export async function renamePothi(id: string, name: string): Promise<void> {
+  const p = state.pothis.find((x) => x.id === id);
+  if (!p) return;
+  await persist({ ...p, name: normalizePothiName(name), updatedAt: new Date().toISOString() });
+}
+
+export async function deletePothi(id: string): Promise<void> {
+  await db.pothis.delete(id);
+  set({ pothis: state.pothis.filter((p) => p.id !== id) });
+}
+
+export async function addToPothi(id: string, slug: string): Promise<void> {
+  const p = state.pothis.find((x) => x.id === id);
+  if (p) await persist(addSlug(p, slug));
+}
+
+export async function removeFromPothi(id: string, slug: string): Promise<void> {
+  const p = state.pothis.find((x) => x.id === id);
+  if (p) await persist(removeSlug(p, slug));
+}
+
+export async function reorderPothi(id: string, slug: string, delta: number): Promise<void> {
+  const p = state.pothis.find((x) => x.id === id);
+  if (p) await persist(moveSlug(p, slug, delta));
 }
 
 export function clearError(): void {

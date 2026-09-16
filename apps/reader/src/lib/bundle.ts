@@ -14,7 +14,20 @@ async function sha256Hex(text: string): Promise<string> {
 
 export type VerifyResult = { ok: true; bundle: Bundle } | { ok: false; reason: string };
 
+/**
+ * Web Crypto exists only in a secure context. A device loading the app over plain http on a local
+ * network therefore cannot verify a bundle, and unverified text must never be stored or shown, so
+ * the failure is reported as what it is rather than as a missing property.
+ */
+export function cryptoAvailable(): boolean {
+  return typeof globalThis.crypto?.subtle?.digest === 'function';
+}
+
+export const INSECURE_CONTEXT_REASON =
+  'this page is not a secure context, so the text cannot be verified; open it over https or on localhost';
+
 export async function verifyBundle(candidate: unknown): Promise<VerifyResult> {
+  if (!cryptoAvailable()) return { ok: false, reason: INSECURE_CONTEXT_REASON };
   if (!isBundleShape(candidate)) return { ok: false, reason: 'malformed bundle' };
   const b = candidate;
   for (const [i, line] of b.lines.entries()) {

@@ -317,3 +317,67 @@ button:disabled {
     font-size: 20px;
   }
 }
+
+/* ---- personal Pothis */
+.pothis {
+  margin: 2rem auto 3rem;
+  max-width: 48rem;
+  padding: 0 1rem;
+}
+.pothi-new {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 0.75rem 0 1rem;
+}
+.pothi-new input {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+.pothi-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+.pothi {
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+}
+.pothi-head,
+.pothi-items li {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.pothi-name {
+  font-weight: 600;
+}
+.pothi-edit {
+  margin-top: 0.75rem;
+  display: grid;
+  gap: 0.5rem;
+}
+.pothi-items {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: 0.35rem;
+}
+.danger {
+  color: var(--danger, #a3352b);
+  justify-self: start;
+}
+.bani-part + .bani-part {
+  margin-top: 2.5rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1.5rem;
+}
+.bani-heading {
+  font-size: 1.1em;
+  opacity: 0.85;
+}
